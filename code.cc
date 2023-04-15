@@ -180,6 +180,109 @@ private:
 
 
 
+
+
+
+class EncoderHeader : public Header 
+{
+public:
+    EncoderHeader ();
+    virtual ~EncoderHeader ();
+    void SetData (std::string data);
+    std::string GetData (void) const;
+    static TypeId GetTypeId (void);
+    virtual TypeId GetInstanceTypeId (void) const;
+    virtual void Print (std::ostream &os) const;
+    virtual void Serialize (Buffer::Iterator start) const;
+    virtual uint32_t Deserialize (Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize (void) const;
+private:
+    std::string m_data;
+    
+
+};
+
+EncoderHeader::EncoderHeader ()
+{
+}
+
+EncoderHeader::~EncoderHeader ()
+{
+}
+
+TypeId
+EncoderHeader::GetTypeId (void)
+{
+    static TypeId tid = TypeId ("ns3::EncoderHeader")
+        .SetParent<Header> ()
+        .AddConstructor<EncoderHeader> ()
+    ;
+    return tid;
+}
+
+TypeId
+EncoderHeader::GetInstanceTypeId (void) const
+{
+    return GetTypeId ();
+}
+
+void
+EncoderHeader::Print (std::ostream &os) const
+{
+    os << "data = " << m_data << endl;
+}
+
+uint32_t
+EncoderHeader::GetSerializedSize (void) const
+{
+    return sizeof(m_data) / sizeof(std::string);
+}
+
+void
+EncoderHeader::Serialize (Buffer::Iterator start) const
+{
+    // start.WriteHtonU16 (m_data);
+    Buffer::Iterator it = start;
+    int length = m_data.length();
+    const char* str = m_data.c_str();
+    for (int i = 0;i < length;i++){
+        it.WriteU8 (str[i]);
+    }
+}
+
+uint32_t
+EncoderHeader::Deserialize (Buffer::Iterator start)
+{
+    // m_data = start.ReadNtohU16 ();
+
+    // return 2;
+    Buffer::Iterator it = start;
+
+    int length = GetSerializedSize();
+    char str[length + 1] = {0};
+    for (int i = 0;i < length;i++){
+      str[i] = it.ReadU8 ();
+    }
+    str[length] = '\0';
+    m_data = string (str);
+    return GetSerializedSize();
+}
+
+void 
+EncoderHeader::SetData (std::string data)
+{
+    m_data = data;
+}
+
+std::string 
+EncoderHeader::GetData (void) const
+{
+    return m_data;
+}
+
+
+
+
 class DecoderHeader : public Header 
 {
 public:
@@ -449,22 +552,19 @@ client::~client ()
 {
 }
 
-static void GenerateTraffic (Ptr<Socket> socket, uint16_t data, uint8_t ip_part, uint16_t port)
+static void GenerateTraffic (Ptr<Socket> socket, uint16_t data)
 {
     Ptr<Packet> packet = new Packet();
-    DecoderHeader m;
+    EncoderHeader m;
+    char send_char = 'a' + data;
+    string s(1, send_char);
     
-    
-    m.SetData(data);
-    m.SetPort(port);
-    string ipv4_s = to_string(ip_part) + "." + to_string(ip_part) + "." + to_string(ip_part) + "." + to_string(ip_part);
-    Ipv4Address ipv4 = Ipv4Address(ipv4_s.c_str());
-    m.SetIpv4(ipv4);
+    m.SetData(s);
     packet->AddHeader (m);
     packet->Print (std::cout);
     socket->Send(packet);
 
-    Simulator::Schedule (Seconds (0.1), &GenerateTraffic, socket, rand() % 26, rand() % 256, rand() % 2000);
+    Simulator::Schedule (Seconds (0.1), &GenerateTraffic, socket, rand() % 26);
 }
 
 void
@@ -474,7 +574,7 @@ client::StartApplication (void)
     InetSocketAddress sockAddr (ip.GetAddress(0), port);
     sock->Connect (sockAddr);
 
-    GenerateTraffic(sock, 0, 0, 0);
+    GenerateTraffic(sock, 0);
 }
 
 master::master (uint16_t port, Ipv4InterfaceContainer& ip)
@@ -510,7 +610,7 @@ master::HandleRead (Ptr<Socket> socket)
             break;
         }
 
-        DecoderHeader destinationHeader;
+        EncoderHeader destinationHeader;
         packet->RemoveHeader (destinationHeader);
         destinationHeader.Print(std::cout);
     }
