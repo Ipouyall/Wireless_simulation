@@ -206,7 +206,7 @@ private:
 class worker : public Application
 {
 public:
-    worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip);
+    worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m;);
     virtual ~worker ();
 
 private:
@@ -220,6 +220,7 @@ private:
     Ipv4InterfaceContainer ip;
     Ptr<Socket> tcpSocket;
     Ptr<Socket> udpSocket;
+    map<uint16_t, string> mapping;
 };
 
 
@@ -257,6 +258,9 @@ main (int argc, char *argv[])
     NodeContainer wifiStaNodeMaster;
     wifiStaNodeMaster.Create (1);
 
+    NodeContainer wifiStaNodeWorker;
+    wifiStaNodeWorker.Create (WORKER_COUNT);
+
     YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
 
     YansWifiPhyHelper phy;
@@ -267,18 +271,19 @@ main (int argc, char *argv[])
 
     WifiMacHelper mac;
     Ssid ssid = Ssid ("ns-3-ssid");
-    mac.SetType ("ns3::StaWifiMac",
-                 "Ssid", SsidValue (ssid),
-                 "ActiveProbing", BooleanValue (false));
+
+    mac.SetType ("ns3::StaWifiMac", "Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
     NetDeviceContainer staDeviceClient;
     staDeviceClient = wifi.Install (phy, mac, wifiStaNodeClient);
-
     mac.SetType ("ns3::ApWifiMac", "Ssid", SsidValue (ssid));
 
     NetDeviceContainer staDeviceMaster;
     staDeviceMaster = wifi.Install (phy, mac, wifiStaNodeMaster);
+    mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
+    NetDeviceContainer staDeviceWorker;
+    staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
     mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
     Ptr<RateErrorModel> em = CreateObject<RateErrorModel> ();
@@ -302,29 +307,36 @@ main (int argc, char *argv[])
     mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
     mobility.Install (wifiStaNodeMaster);
 
+    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+    mobility.Install (wifiStaNodeWorker);
+
     InternetStackHelper stack;
     stack.Install (wifiStaNodeClient);
     stack.Install (wifiStaNodeMaster);
+    stack.Install (wifiStaNodeWorker);
 
     Ipv4AddressHelper address;
 
     Ipv4InterfaceContainer staNodeClientInterface;
     Ipv4InterfaceContainer staNodesMasterInterface;
+    Ipv4InterfaceContainer staNodesWorkerInterface;
 
     address.SetBase ("10.1.3.0", "255.255.255.0");
     staNodeClientInterface = address.Assign (staDeviceClient);
     staNodesMasterInterface = address.Assign (staDeviceMaster);
+    staNodesWorkerInterface = address.Assign (staDeviceWorker);
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-    uint16_t port = 1102;
+    // TODO: Check from here
+    uint16_t client_master_port = 1102;
 
-    Ptr<client> clientApp = CreateObject<client> (port, staNodesMasterInterface);
+    Ptr<client> clientApp = CreateObject<client> (client_master_port, staNodesMasterInterface);
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
     clientApp->SetStartTime (Seconds (0.0));
     clientApp->SetStopTime (Seconds (duration));  
 
-    Ptr<master> masterApp = CreateObject<master> (port, staNodesMasterInterface);
+    Ptr<master> masterApp = CreateObject<master> (client_master_port, staNodesMasterInterface);
     wifiStaNodeMaster.Get (0)->AddApplication (masterApp);
     masterApp->SetStartTime (Seconds (0.0));
     masterApp->SetStopTime (Seconds (duration));  
@@ -422,17 +434,18 @@ master::HandleRead (Ptr<Socket> socket)
         {
             break;
         }
-
+        // TODO: change following to send to workers
         MyHeader destinationHeader;
         packet->RemoveHeader (destinationHeader);
         destinationHeader.Print(std::cout);
     }
 }
 
-worker::worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip)
+worker::worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
   : tcpPort(tcpPort),
     udpPort(udpPort),
-    ip(ip)
+    ip(ip),
+    mapping(m)
 {
 }
 
