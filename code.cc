@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <map>
+#include <vector>
 
 #include "ns3/core-module.h"
 #include "ns3/point-to-point-module.h"
@@ -28,7 +29,7 @@
 #include "ns3/traffic-control-module.h"
 #include "ns3/flow-monitor-module.h"
 
-#define WORKER_COUNT 3
+#define InetSocketAddress 3
 
 using namespace ns3;
 using namespace std;
@@ -177,12 +178,14 @@ class master : public Application
 public:
     master (uint16_t port, Ipv4InterfaceContainer& ip);
     virtual ~master ();
+    void add_worker(InetSocketAddress waddr)
 private:
     virtual void StartApplication (void);
     void HandleRead (Ptr<Socket> socket);
 
     uint16_t port;
     Ipv4InterfaceContainer ip;
+    vector<Ptr<Socket>> worker_sockets;
     Ptr<Socket> socket;
 };
 
@@ -208,11 +211,11 @@ class worker : public Application
 public:
     worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m;);
     virtual ~worker ();
+    InetSocketAddress get_server_address();
 
 private:
     virtual void StartApplication (void);
     void HandleRead (Ptr<Socket> socket);
-    void HandleWrite (Ptr<Socket> socket, uint32_t bytesSent);
     void ProcessData (Ptr<Packet> packet);
 
     uint16_t tcpPort;
@@ -328,8 +331,9 @@ main (int argc, char *argv[])
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-    // TODO: Check from here
+    // TODO: Check from here, get workers' sockAddr to master
     uint16_t client_master_port = 1102;
+    uint16_t worker_ports[WORKER_COUNT]= {5050, 5051, 5052};
 
     Ptr<client> clientApp = CreateObject<client> (client_master_port, staNodesMasterInterface);
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
@@ -413,6 +417,14 @@ master::~master ()
 {
 }
 
+void 
+master::add_worker(InetSocketAddress waddr)
+{
+    Ptr<Socket> remote = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
+    remote->Connect (waddr);
+    worker_sockets.push_back(remote);
+}
+
 void
 master::StartApplication (void)
 {
@@ -485,8 +497,6 @@ worker::ProcessData (Ptr<Packet> packet)
     udpSendSocket->Send (packet);
 }
 
-void 
-worker::HandleWrite (Ptr<Socket> socket, uint32_t bytesSent)
-{
-    socket->Close ();
+InetSocketAddress worker::get_server_address(){
+    return InetSocketAddress (ip.GetAddress (0), tcpPort);
 }
