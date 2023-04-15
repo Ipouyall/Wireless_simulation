@@ -220,6 +220,7 @@ private:
 
     uint16_t tcpPort;
     uint16_t udpPort;
+    bool connected;
     Ipv4InterfaceContainer ip;
     Ptr<Socket> tcpSocket;
     Ptr<Socket> udpSocket;
@@ -457,7 +458,8 @@ worker::worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, 
   : tcpPort(tcpPort),
     udpPort(udpPort),
     ip(ip),
-    mapping(m)
+    mapping(m),
+    connected(false)
 {
 }
 
@@ -482,20 +484,32 @@ worker::StartApplication (void)
 void 
 worker::HandleRead (Ptr<Socket> socket)
 {
-    Ptr<Socket> childSocket = socket->Accept ();
-    childSocket->SetRecvCallback (MakeCallback (&worker::ProcessData, this));
+    if (!connected) {
+        Ptr<Socket> childSocket = socket->Accept ();
+        childSocket->SetRecvCallback (MakeCallback (&worker::ProcessData, this));
+        connected = true;
+    } else {
+        ProcessData(socket->Recv());
+    }
 }
 
-void 
-worker::ProcessData (Ptr<Packet> packet)
-{
+void worker::ProcessData(Ptr<Packet> packet) {
+    std::string message = GetStringFromPacket(packet);
+    if (message == "END_COMMUNICATION") {
+        tcpSocket->Close();
+        return;
+    }
+
     // Process the data here
+    // TODO: implement
 
     // Send the response to the client using UDP
     Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
     udpSendSocket->Connect (InetSocketAddress (clientAddress, udpPort));
     udpSendSocket->Send (packet);
+    udpSendSocket->Close();
 }
+
 
 InetSocketAddress worker::get_server_address(){
     return InetSocketAddress (ip.GetAddress (0), tcpPort);
