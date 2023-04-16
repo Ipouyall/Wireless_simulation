@@ -421,6 +421,7 @@ private:
     Ptr<Socket> socket;
     Ptr<Socket> server;
     Ipv4InterfaceContainer ip;
+    std::string encodedData;
 };
 
 class worker : public Application
@@ -557,8 +558,8 @@ main (int argc, char *argv[])
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
     clientApp->SetStartTime (Seconds (0.0));
     clientApp->SetStopTime (Seconds (duration));  
-    uint16_t client_port = clientApp->getIP();
-    Ipv4Address client_ip = clientApp->getPort();
+    uint16_t client_port = clientApp->getPort();
+    Ipv4Address client_ip = clientApp->getIP();
 
     Ptr<master> masterApp = CreateObject<master> (client_master_port, staNodesMasterInterface, client_ip, client_port);
     wifiStaNodeMaster.Get (0)->AddApplication (masterApp);
@@ -583,7 +584,8 @@ main (int argc, char *argv[])
 client::client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip)
         : port (port),
           s_port (s_port),
-          ip (ip)
+          ip (ip),
+          encodedData("")
 {
     std::srand (time(0));
 }
@@ -633,7 +635,21 @@ uint16_t client::getPort()
 void
 client::HandleIncoming (Ptr<Socket> socket)
 {
-    // TODO: implement
+    Ptr<Packet> packet;
+    while ((packet = socket->Recv ()))
+    {
+        if (packet->GetSize () == 0)
+        {
+            break;
+        }
+
+        EncodedHeader encoded;
+        packet->RemoveHeader (encoded);
+        encoded.Print(std::cout);
+
+        string ed = encoded.GetData();
+        encodedData += ed;
+    }
 }
 
 master::master (uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port)
