@@ -710,7 +710,6 @@ master::HandleRead (Ptr<Socket> socket)
 
 worker::worker (uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
   : tcpPort(tcpPort),
-    udpPort(udpPort),
     ip(ip),
     mapping(m)
 {
