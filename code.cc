@@ -91,7 +91,7 @@ AverageDelayMonitor (FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, doub
 string get_from_map (map<uint16_t, string> m, uint16_t key) {
     if (m.find(key) == m.end())
         return "";
-    return m[key]
+    return m[key];
 }
 
 class MyHeader : public Header 
@@ -178,7 +178,7 @@ class master : public Application
 public:
     master (uint16_t port, Ipv4InterfaceContainer& ip);
     virtual ~master ();
-    void add_worker(InetSocketAddress waddr)
+    void add_worker(InetSocketAddress waddr);
 private:
     virtual void StartApplication (void);
     void HandleRead (Ptr<Socket> socket);
