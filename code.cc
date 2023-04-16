@@ -173,6 +173,225 @@ MyHeader::GetData (void) const
     return m_data;
 }
 
+class EncoderHeader : public Header 
+{
+public:
+    EncoderHeader ();
+    virtual ~EncoderHeader ();
+    void SetData (std::string data);
+    std::string GetData (void) const;
+    static TypeId GetTypeId (void);
+    virtual TypeId GetInstanceTypeId (void) const;
+    virtual void Print (std::ostream &os) const;
+    virtual void Serialize (Buffer::Iterator start) const;
+    virtual uint32_t Deserialize (Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize (void) const;
+private:
+    std::string m_data;
+    
+
+};
+
+EncoderHeader::EncoderHeader ()
+{
+}
+
+EncoderHeader::~EncoderHeader ()
+{
+}
+
+TypeId
+EncoderHeader::GetTypeId (void)
+{
+    static TypeId tid = TypeId ("ns3::EncoderHeader")
+        .SetParent<Header> ()
+        .AddConstructor<EncoderHeader> ()
+    ;
+    return tid;
+}
+
+TypeId
+EncoderHeader::GetInstanceTypeId (void) const
+{
+    return GetTypeId ();
+}
+
+void
+EncoderHeader::Print (std::ostream &os) const
+{
+    os << "data = " << m_data << endl;
+}
+
+uint32_t
+EncoderHeader::GetSerializedSize (void) const
+{
+    return sizeof(m_data) / sizeof(std::string);
+}
+
+void
+EncoderHeader::Serialize (Buffer::Iterator start) const
+{
+    // start.WriteHtonU16 (m_data);
+    Buffer::Iterator it = start;
+    int length = m_data.length();
+    const char* str = m_data.c_str();
+    for (int i = 0;i < length;i++){
+        it.WriteU8 (str[i]);
+    }
+}
+
+uint32_t
+EncoderHeader::Deserialize (Buffer::Iterator start)
+{
+    // m_data = start.ReadNtohU16 ();
+
+    // return 2;
+    Buffer::Iterator it = start;
+
+    int length = GetSerializedSize();
+    char str[length + 1] = {0};
+    for (int i = 0;i < length;i++){
+      str[i] = it.ReadU8 ();
+    }
+    str[length] = '\0';
+    m_data = string (str);
+    return GetSerializedSize();
+}
+
+void 
+EncoderHeader::SetData (std::string data)
+{
+    m_data = data;
+}
+
+std::string 
+EncoderHeader::GetData (void) const
+{
+    return m_data;
+}
+
+
+
+
+class DecoderHeader : public Header 
+{
+public:
+    DecoderHeader ();
+    virtual ~DecoderHeader ();
+    void SetData (uint16_t data);
+    void SetPort (uint16_t port);
+    void SetIpv4 (Ipv4Address ipv4);
+    uint16_t GetData (void) const;
+    uint16_t GetPort (void) const;
+    Ipv4Address GetIpv4 (void) const;
+    static TypeId GetTypeId (void);
+    virtual TypeId GetInstanceTypeId (void) const;
+    virtual void Print (std::ostream &os) const;
+    virtual void Serialize (Buffer::Iterator start) const;
+    virtual uint32_t Deserialize (Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize (void) const;
+private:
+    uint16_t m_data;
+    uint16_t m_port;
+    Ipv4Address m_ipv4;
+};
+
+DecoderHeader::DecoderHeader ()
+{
+}
+
+DecoderHeader::~DecoderHeader ()
+{
+}
+
+TypeId
+DecoderHeader::GetTypeId (void)
+{
+    static TypeId tid = TypeId ("ns3::DecoderHeader")
+        .SetParent<Header> ()
+        .AddConstructor<EncoderHeader> ()
+    ;
+    return tid;
+}
+
+TypeId
+DecoderHeader::GetInstanceTypeId (void) const
+{
+    return GetTypeId ();
+}
+
+void
+DecoderHeader::Print (std::ostream &os) const
+{
+    os << "data = " << m_data << endl;
+    os << "port = " << m_port << endl;
+    os << "ip = "; m_ipv4.Print(os); os << endl;
+}
+
+uint32_t
+DecoderHeader::GetSerializedSize (void) const
+{
+    return 2 + 2 + 4;
+}
+
+void
+DecoderHeader::Serialize (Buffer::Iterator start) const
+{
+    // start.WriteHtonU16 (m_data);
+    Buffer::Iterator it = start;
+    it.WriteHtonU16 (m_data);
+    it.WriteHtonU16 (m_port);
+    WriteTo (it, m_ipv4);
+}
+
+uint32_t
+DecoderHeader::Deserialize (Buffer::Iterator start)
+{
+    // m_data = start.ReadNtohU16 ();
+
+    // return 2;
+    Buffer::Iterator it = start;
+    m_data = it.ReadNtohU16 ();
+    m_port = it.ReadNtohU16 ();
+    ReadFrom (it, m_ipv4);
+    return GetSerializedSize();
+}
+
+void 
+DecoderHeader::SetData (uint16_t data)
+{
+    m_data = data;
+}
+void
+DecoderHeader::SetPort (uint16_t port)
+{
+    m_port = port;
+}
+void
+DecoderHeader::SetIpv4 (Ipv4Address ipv4)
+{
+    m_ipv4 = ipv4;
+}
+
+uint16_t
+DecoderHeader::GetData (void) const
+{
+    return m_data;
+}
+uint16_t
+DecoderHeader::GetPort (void) const
+{
+    return m_port;
+}
+
+Ipv4Address
+DecoderHeader::GetIpv4 (void) const
+{
+    return m_ipv4;
+}
+
+
+
 class master : public Application
 {
 public:
