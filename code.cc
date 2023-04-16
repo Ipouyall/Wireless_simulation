@@ -333,10 +333,10 @@ main (int argc, char *argv[])
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
     // TODO: Check from here, get workers' sockAddr to master
-    uint16_t client_master_port = 1102;
+    uint16_t client_master_port = 1102, worker_client_port = 1104;
     // uint16_t worker_ports[WORKER_COUNT]= {5050, 5051, 5052};
 
-    Ptr<client> clientApp = CreateObject<client> (client_master_port, staNodesMasterInterface);
+    Ptr<client> clientApp = CreateObject<client> (client_master_port, worker_client_port, staNodesMasterInterface);
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
     clientApp->SetStartTime (Seconds (0.0));
     clientApp->SetStopTime (Seconds (duration));  
@@ -514,7 +514,7 @@ void worker::ProcessData(Ptr<Packet> packet)
 
     // Send the response to the client using UDP
     Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress remote_client = InetSocketAddress (clientip.GetAddress (0)Address, udpPort);
+    InetSocketAddress remote_client = InetSocketAddress (ip.GetAddress (0)Address, udpPort);
     udpSendSocket->Connect (remote_client);
     udpSendSocket->Send (packet);
     udpSendSocket->Close();
