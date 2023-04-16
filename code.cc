@@ -265,9 +265,6 @@ EncodedHeader::GetData (void) const
     return m_data;
 }
 
-
-
-
 class DecodedHeader : public Header 
 {
 public:
@@ -427,7 +424,7 @@ private:
 class worker : public Application
 {
 public:
-    worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
+    worker (uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
     virtual ~worker ();
     InetSocketAddress get_server_address();
 
@@ -438,7 +435,6 @@ private:
     void HandleAccept (Ptr<Socket> sock, const Address &from);
 
     uint16_t tcpPort;
-    uint16_t udpPort;
     Ipv4InterfaceContainer ip;
     Ptr<Socket> tcpSocket;
     Ptr<Socket> udpSocket;
@@ -694,14 +690,25 @@ master::HandleRead (Ptr<Socket> socket)
         {
             break;
         }
-        // TODO: change following to send to workers
-        MyHeader destinationHeader;
-        packet->RemoveHeader (destinationHeader);
-        destinationHeader.Print(std::cout);
+        MyHeader m_header;
+        packet->RemoveHeader (m_header);
+        m_header.Print(std::cout);
+
+        DecodedHeader d_header;
+        d_header.SetData(m_header.GetData());
+        d_header.SetPort(c_port);
+        d_header.SetIpv4(cip);
+
+        for (auto& w : worker_sockets)
+        {
+            Ptr<Packet> packet = new Packet();
+            packet->AddHeader(d_header);
+            w->Send (packet);
+        }
     }
 }
 
-worker::worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
+worker::worker (uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
   : tcpPort(tcpPort),
     udpPort(udpPort),
     ip(ip),
