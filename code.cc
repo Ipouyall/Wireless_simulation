@@ -458,8 +458,7 @@ worker::worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, 
   : tcpPort(tcpPort),
     udpPort(udpPort),
     ip(ip),
-    mapping(m),
-    connected(false)
+    mapping(m)
 {
 }
 
@@ -474,9 +473,9 @@ worker::StartApplication (void)
     tcpSocket = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
     tcpSocket->Bind (InetSocketAddress (ip.GetAddress (0), tcpPort));
     tcpSocket->Listen ();
-    socket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
-                             MakeCallback (&master::HandleAccept, this));
-    socket->SetRecvCallback (MakeCallback (&master::HandleRead, this));
+    tcpSocket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
+                             MakeCallback (&worker::HandleAccept, this));
+    tcpSocket->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
 
     // Create UDP socket and set the options
     udpSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
@@ -487,7 +486,7 @@ void
 worker::HandleAccept (Ptr<Socket> sock, const Address &from)
 {
 //   NS_LOG_FUNCTION (this << sock << from);
-  sock->SetRecvCallback (MakeCallback (&master::HandleRead, this));
+  sock->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
 }
 
 void 
@@ -506,7 +505,9 @@ void worker::ProcessData(Ptr<Packet> packet)
 {   // TODO: implement
     // TODO: use decoded header
 
-    uint16_t key; // initialize from packet's header
+    // initialize from packet's header
+    uint16_t key; 
+    Ipv4InterfaceContainer clientAddress;
     string encoded = get_from_map (mapping, key);
     if (encoded == "") return;
 
