@@ -507,7 +507,7 @@ void worker::ProcessData(Ptr<Packet> packet)
 
     // initialize from packet's header
     uint16_t key; 
-    Ipv4InterfaceContainer clientAddress;
+    Ipv4InterfaceContainer clientAddress = ip.GetAddress (0);
     string encoded = get_from_map (mapping, key);
     if (encoded == "") return;
 
@@ -515,7 +515,7 @@ void worker::ProcessData(Ptr<Packet> packet)
 
     // Send the response to the client using UDP
     Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress remote_client (clientAddress, udpPort);
+    InetSocketAddress remote_client = InetSocketAddress (clientAddress, udpPort);
     udpSendSocket->Connect (remote_client);
     udpSendSocket->Send (packet);
     udpSendSocket->Close();
