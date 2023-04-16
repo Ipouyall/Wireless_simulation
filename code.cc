@@ -733,7 +733,6 @@ worker::StartApplication (void)
 void
 worker::HandleAccept (Ptr<Socket> sock, const Address &from)
 {
-//   NS_LOG_FUNCTION (this << sock << from);
   sock->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
 }
 
