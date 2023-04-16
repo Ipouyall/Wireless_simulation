@@ -506,7 +506,7 @@ void worker::ProcessData(Ptr<Packet> packet)
     // TODO: use decoded header
 
     // initialize from packet's header
-    uint16_t key;
+    uint16_t key=44;
     string encoded = get_from_map (mapping, key);
     if (encoded == "") return;
 
