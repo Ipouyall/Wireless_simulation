@@ -389,7 +389,7 @@ DecodedHeader::GetIpv4 (void) const
 class master : public Application
 {
 public:
-    master (uint16_t port, Ipv4InterfaceContainer& ip);
+    master (uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port);
     virtual ~master ();
     void add_worker(InetSocketAddress waddr);
 private:
@@ -397,6 +397,8 @@ private:
     void HandleRead (Ptr<Socket> socket);
 
     uint16_t port;
+    Ipv4Address cip;
+    uint16_t c_port;
     Ipv4InterfaceContainer ip;
     vector<Ptr<Socket>> worker_sockets;
     Ptr<Socket> socket;
@@ -407,6 +409,8 @@ class client : public Application
 public:
     client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip);
     virtual ~client ();
+    Ipv4Address getIP();
+    uint16_t getPort();
 
 private:
     virtual void StartApplication (void);
@@ -553,8 +557,10 @@ main (int argc, char *argv[])
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
     clientApp->SetStartTime (Seconds (0.0));
     clientApp->SetStopTime (Seconds (duration));  
+    uint16_t client_port = clientApp->getIP();
+    Ipv4Address client_ip = clientApp->getPort();
 
-    Ptr<master> masterApp = CreateObject<master> (client_master_port, staNodesMasterInterface);
+    Ptr<master> masterApp = CreateObject<master> (client_master_port, staNodesMasterInterface, client_ip, client_port);
     wifiStaNodeMaster.Get (0)->AddApplication (masterApp);
     masterApp->SetStartTime (Seconds (0.0));
     masterApp->SetStopTime (Seconds (duration));  
@@ -614,15 +620,27 @@ client::StartApplication (void)
     GenerateTraffic(sock, 0);
 }
 
+Ipv4Address client::getIP()
+{
+    return ip.GetAddress(0);
+}
+
+uint16_t client::getPort()
+{
+    return s_port;
+}
+
 void
 client::HandleIncoming (Ptr<Socket> socket)
 {
     // TODO: implement
 }
 
-master::master (uint16_t port, Ipv4InterfaceContainer& ip)
+master::master (uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port)
         : port (port),
-          ip (ip)
+          ip (ip),
+          cip(cip),
+          c_port(c_port)
 {
     std::srand (time(0));
 }
