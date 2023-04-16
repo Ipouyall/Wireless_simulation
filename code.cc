@@ -262,8 +262,8 @@ main (int argc, char *argv[])
     NodeContainer wifiStaNodeMaster;
     wifiStaNodeMaster.Create (1);
 
-    // NodeContainer wifiStaNodeWorker;
-    // wifiStaNodeWorker.Create (WORKER_COUNT);
+    NodeContainer wifiStaNodeWorker;
+    wifiStaNodeWorker.Create (WORKER_COUNT);
 
     YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
 
@@ -286,8 +286,8 @@ main (int argc, char *argv[])
     staDeviceMaster = wifi.Install (phy, mac, wifiStaNodeMaster);
     mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
-    // NetDeviceContainer staDeviceWorker;
-    // staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
+    NetDeviceContainer staDeviceWorker;
+    staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
     // mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
     Ptr<RateErrorModel> em = CreateObject<RateErrorModel> ();
@@ -311,24 +311,24 @@ main (int argc, char *argv[])
     mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
     mobility.Install (wifiStaNodeMaster);
 
-    // mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-    // mobility.Install (wifiStaNodeWorker);
+    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+    mobility.Install (wifiStaNodeWorker);
 
     InternetStackHelper stack;
     stack.Install (wifiStaNodeClient);
     stack.Install (wifiStaNodeMaster);
-    // stack.Install (wifiStaNodeWorker);
+    stack.Install (wifiStaNodeWorker);
 
     Ipv4AddressHelper address;
 
     Ipv4InterfaceContainer staNodeClientInterface;
     Ipv4InterfaceContainer staNodesMasterInterface;
-    // Ipv4InterfaceContainer staNodesWorkerInterface;
+    Ipv4InterfaceContainer staNodesWorkerInterface;
 
     address.SetBase ("10.1.3.0", "255.255.255.0");
     staNodeClientInterface = address.Assign (staDeviceClient);
     staNodesMasterInterface = address.Assign (staDeviceMaster);
-    // staNodesWorkerInterface = address.Assign (staDeviceWorker);
+    staNodesWorkerInterface = address.Assign (staDeviceWorker);
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
@@ -486,7 +486,7 @@ worker::StartApplication (void)
 void
 worker::HandleAccept (Ptr<Socket> sock, const Address &from)
 {
-  NS_LOG_FUNCTION (this << sock << from);
+//   NS_LOG_FUNCTION (this << sock << from);
   sock->SetRecvCallback (MakeCallback (&master::HandleRead, this));
 }
 
@@ -497,25 +497,20 @@ worker::HandleRead (Ptr<Socket> socket)
 
     while ((packet = socket->Recv ()))
     {
-        if (packet->GetSize () == 0)
-        {
-            cout << "Master -> Transmission ended " << endl;
-            break;
-        }
+        if (packet->GetSize () == 0) break;
         ProcessData(packet);
     }
 }
 
-void worker::ProcessData(Ptr<Packet> packet) {
-    std::string message = GetStringFromPacket(packet);
-    if (message == "END_COMMUNICATION") {
-        tcpSocket->Close();
-        return;
-    }
-
-    // Process the data here
-    // TODO: implement
+void worker::ProcessData(Ptr<Packet> packet) 
+{   // TODO: implement
     // TODO: use decoded header
+
+    uint16_t key; // initialize from packet's header
+    string encoded = get_from_map (mapping, key);
+    if (encoded == "") return;
+
+    // setup new header
 
     // Send the response to the client using UDP
     Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
