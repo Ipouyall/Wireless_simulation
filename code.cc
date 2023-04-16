@@ -397,9 +397,9 @@ private:
     void HandleRead (Ptr<Socket> socket);
 
     uint16_t port;
+    Ipv4InterfaceContainer ip;
     Ipv4Address cip;
     uint16_t c_port;
-    Ipv4InterfaceContainer ip;
     vector<Ptr<Socket>> worker_sockets;
     Ptr<Socket> socket;
 };
