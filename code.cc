@@ -188,8 +188,6 @@ public:
     virtual uint32_t GetSerializedSize (void) const;
 private:
     std::string m_data;
-    
-
 };
 
 EncodedHeader::EncodedHeader ()
@@ -386,7 +384,6 @@ DecodedHeader::GetIpv4 (void) const
 {
     return m_ipv4;
 }
-
 
 
 class master : public Application
@@ -722,9 +719,9 @@ void worker::ProcessData(Ptr<Packet> packet)
     DecodedHeader d_header;
     packet->RemoveHeader (d_header);
 
-    uint16_t key = d_header.m_data,
-             c_port = d_header.m_port;
-    Ipv4Address c_ipv4 = d_header.m_ipv4;
+    uint16_t key = d_header.GetData(),
+             c_port = d_header.GetPort();
+    Ipv4Address c_ipv4 = d_header.GetIpv4();
     string encoded = get_from_map (mapping, key);
     if (encoded == "") return;
 
