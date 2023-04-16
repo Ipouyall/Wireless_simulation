@@ -29,7 +29,7 @@
 #include "ns3/traffic-control-module.h"
 #include "ns3/flow-monitor-module.h"
 
-#define InetSocketAddress 3
+#define WORKER_COUNT 3
 
 using namespace ns3;
 using namespace std;
