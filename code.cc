@@ -437,7 +437,6 @@ private:
     uint16_t tcpPort;
     Ipv4InterfaceContainer ip;
     Ptr<Socket> tcpSocket;
-    Ptr<Socket> udpSocket;
     map<uint16_t, string> mapping;
 };
 
@@ -729,10 +728,6 @@ worker::StartApplication (void)
     tcpSocket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
                              MakeCallback (&worker::HandleAccept, this));
     tcpSocket->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
-
-    // Create UDP socket and set the options
-    udpSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    udpSocket->Bind (InetSocketAddress (ip.GetAddress (0), udpPort));
 }
 
 void
