@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string>
 #include <fstream>
+#include <map>
+#include <vector>
 
 #include "ns3/core-module.h"
 #include "ns3/point-to-point-module.h"
@@ -26,6 +28,8 @@
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/traffic-control-module.h"
 #include "ns3/flow-monitor-module.h"
+
+#define WORKER_COUNT 3
 
 using namespace ns3;
 using namespace std;
@@ -82,6 +86,12 @@ AverageDelayMonitor (FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, doub
     }
 
     Simulator::Schedule (Seconds (10),&AverageDelayMonitor, fmhelper, flowMon, em);
+}
+
+string get_from_map (map<uint16_t, string> m, uint16_t key) {
+    if (m.find(key) == m.end())
+        return "";
+    return m[key];
 }
 
 class MyHeader : public Header 
@@ -168,28 +178,53 @@ class master : public Application
 public:
     master (uint16_t port, Ipv4InterfaceContainer& ip);
     virtual ~master ();
+    void add_worker(InetSocketAddress waddr);
 private:
     virtual void StartApplication (void);
     void HandleRead (Ptr<Socket> socket);
 
     uint16_t port;
     Ipv4InterfaceContainer ip;
+    vector<Ptr<Socket>> worker_sockets;
     Ptr<Socket> socket;
 };
-
 
 class client : public Application
 {
 public:
-    client (uint16_t port, Ipv4InterfaceContainer& ip);
+    client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip);
     virtual ~client ();
 
 private:
     virtual void StartApplication (void);
+    void HandleIncoming (Ptr<Socket> socket);
 
     uint16_t port;
+    uint16_t s_port;
     Ptr<Socket> socket;
+    Ptr<Socket> server;
     Ipv4InterfaceContainer ip;
+};
+
+class worker : public Application
+{
+public:
+    worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
+    virtual ~worker ();
+    InetSocketAddress get_server_address();
+
+private:
+    virtual void StartApplication (void);
+    void HandleRead (Ptr<Socket> socket);
+    void ProcessData (Ptr<Packet> packet);
+    void HandleAccept (Ptr<Socket> sock, const Address &from);
+
+    uint16_t tcpPort;
+    uint16_t udpPort;
+    Ipv4InterfaceContainer ip;
+    Ptr<Socket> tcpSocket;
+    Ptr<Socket> udpSocket;
+    map<uint16_t, string> mapping;
 };
 
 
@@ -216,11 +251,19 @@ main (int argc, char *argv[])
         LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
     }
 
+    // map<uint16_t, string> mapping1, mapping2, mapping3;
+    // mapping1 = {{0,"a"}, {3,"b"}, {4,"c"}, {11,"d"}, {19,"e"}, {22,"f"}, {23,"g"}, {24,"h"}};
+    // mapping2 = {{5,"i"}, {6,"j"}, {9,"k"}, {13,"l"}, {15,"m"}, {1,"n"}, {7,"o"}, {21,"p"}, {25,"q"}};
+    // mapping3 = {{2,"r"}, {8,"s"}, {10,"t"}, {14,"u"}, {12,"v"}, {16,"w"}, {17,"x"}, {18,"y"}, {20,"z"}};
+
     NodeContainer wifiStaNodeClient;
     wifiStaNodeClient.Create (1);
 
     NodeContainer wifiStaNodeMaster;
     wifiStaNodeMaster.Create (1);
+
+    NodeContainer wifiStaNodeWorker;
+    wifiStaNodeWorker.Create (WORKER_COUNT);
 
     YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
 
@@ -232,19 +275,20 @@ main (int argc, char *argv[])
 
     WifiMacHelper mac;
     Ssid ssid = Ssid ("ns-3-ssid");
-    mac.SetType ("ns3::StaWifiMac",
-                 "Ssid", SsidValue (ssid),
-                 "ActiveProbing", BooleanValue (false));
+
+    mac.SetType ("ns3::StaWifiMac", "Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
     NetDeviceContainer staDeviceClient;
     staDeviceClient = wifi.Install (phy, mac, wifiStaNodeClient);
-
     mac.SetType ("ns3::ApWifiMac", "Ssid", SsidValue (ssid));
 
     NetDeviceContainer staDeviceMaster;
     staDeviceMaster = wifi.Install (phy, mac, wifiStaNodeMaster);
-
     mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
+
+    NetDeviceContainer staDeviceWorker;
+    staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
+    // mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
     Ptr<RateErrorModel> em = CreateObject<RateErrorModel> ();
     em->SetAttribute ("ErrorRate", DoubleValue (error));
@@ -267,29 +311,37 @@ main (int argc, char *argv[])
     mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
     mobility.Install (wifiStaNodeMaster);
 
+    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+    mobility.Install (wifiStaNodeWorker);
+
     InternetStackHelper stack;
     stack.Install (wifiStaNodeClient);
     stack.Install (wifiStaNodeMaster);
+    stack.Install (wifiStaNodeWorker);
 
     Ipv4AddressHelper address;
 
     Ipv4InterfaceContainer staNodeClientInterface;
     Ipv4InterfaceContainer staNodesMasterInterface;
+    Ipv4InterfaceContainer staNodesWorkerInterface;
 
     address.SetBase ("10.1.3.0", "255.255.255.0");
     staNodeClientInterface = address.Assign (staDeviceClient);
     staNodesMasterInterface = address.Assign (staDeviceMaster);
+    staNodesWorkerInterface = address.Assign (staDeviceWorker);
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-    uint16_t port = 1102;
+    // TODO: Check from here, get workers' sockAddr to master
+    uint16_t client_master_port = 1102, worker_client_port = 1104;
+    // uint16_t worker_ports[WORKER_COUNT]= {5050, 5051, 5052};
 
-    Ptr<client> clientApp = CreateObject<client> (port, staNodesMasterInterface);
+    Ptr<client> clientApp = CreateObject<client> (client_master_port, worker_client_port, staNodesMasterInterface);
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
     clientApp->SetStartTime (Seconds (0.0));
     clientApp->SetStopTime (Seconds (duration));  
 
-    Ptr<master> masterApp = CreateObject<master> (port, staNodesMasterInterface);
+    Ptr<master> masterApp = CreateObject<master> (client_master_port, staNodesMasterInterface);
     wifiStaNodeMaster.Get (0)->AddApplication (masterApp);
     masterApp->SetStartTime (Seconds (0.0));
     masterApp->SetStopTime (Seconds (duration));  
@@ -309,8 +361,9 @@ main (int argc, char *argv[])
     return 0;
 }
 
-client::client (uint16_t port, Ipv4InterfaceContainer& ip)
+client::client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip)
         : port (port),
+          s_port (s_port),
           ip (ip)
 {
     std::srand (time(0));
@@ -340,7 +393,18 @@ client::StartApplication (void)
     InetSocketAddress sockAddr (ip.GetAddress(0), port);
     sock->Connect (sockAddr);
 
+    server = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
+    InetSocketAddress local = InetSocketAddress (ip.GetAddress(0), s_port);
+    server->Bind (local);
+    server->SetRecvCallback (MakeCallback (&client::HandleIncoming, this));
+
     GenerateTraffic(sock, 0);
+}
+
+void
+client::HandleIncoming (Ptr<Socket> socket)
+{
+    // TODO: implement
 }
 
 master::master (uint16_t port, Ipv4InterfaceContainer& ip)
@@ -352,6 +416,14 @@ master::master (uint16_t port, Ipv4InterfaceContainer& ip)
 
 master::~master ()
 {
+}
+
+void 
+master::add_worker(InetSocketAddress waddr)
+{
+    Ptr<Socket> remote = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
+    remote->Connect (waddr);
+    worker_sockets.push_back(remote);
 }
 
 void
@@ -375,9 +447,80 @@ master::HandleRead (Ptr<Socket> socket)
         {
             break;
         }
-
+        // TODO: change following to send to workers
         MyHeader destinationHeader;
         packet->RemoveHeader (destinationHeader);
         destinationHeader.Print(std::cout);
     }
+}
+
+worker::worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
+  : tcpPort(tcpPort),
+    udpPort(udpPort),
+    ip(ip),
+    mapping(m)
+{
+}
+
+worker::~worker ()
+{
+}
+
+void 
+worker::StartApplication (void)
+{
+    // Create TCP socket and set the options
+    tcpSocket = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
+    tcpSocket->Bind (InetSocketAddress (ip.GetAddress (0), tcpPort));
+    tcpSocket->Listen ();
+    tcpSocket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
+                             MakeCallback (&worker::HandleAccept, this));
+    tcpSocket->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
+
+    // Create UDP socket and set the options
+    udpSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
+    udpSocket->Bind (InetSocketAddress (ip.GetAddress (0), udpPort));
+}
+
+void
+worker::HandleAccept (Ptr<Socket> sock, const Address &from)
+{
+//   NS_LOG_FUNCTION (this << sock << from);
+  sock->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
+}
+
+void 
+worker::HandleRead (Ptr<Socket> socket)
+{
+    Ptr<Packet> packet;
+
+    while ((packet = socket->Recv ()))
+    {
+        if (packet->GetSize () == 0) break;
+        ProcessData(packet);
+    }
+}
+
+void worker::ProcessData(Ptr<Packet> packet) 
+{   // TODO: implement
+    // TODO: use decoded header
+
+    // initialize from packet's header
+    uint16_t key=44;
+    string encoded = get_from_map (mapping, key);
+    if (encoded == "") return;
+
+    // setup new header
+
+    // Send the response to the client using UDP
+    Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
+    InetSocketAddress remote_client (ip.GetAddress (0), udpPort);
+    udpSendSocket->Connect (remote_client);
+    udpSendSocket->Send (packet);
+    udpSendSocket->Close();
+}
+
+
+InetSocketAddress worker::get_server_address(){
+    return InetSocketAddress (ip.GetAddress (0), tcpPort);
 }
