@@ -515,7 +515,8 @@ void worker::ProcessData(Ptr<Packet> packet)
 
     // Send the response to the client using UDP
     Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    udpSendSocket->Connect (InetSocketAddress (clientAddress, udpPort));
+    InetSocketAddress remote_client (clientAddress, udpPort);
+    udpSendSocket->Connect (remote_client);
     udpSendSocket->Send (packet);
     udpSendSocket->Close();
 }
