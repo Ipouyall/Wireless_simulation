@@ -209,7 +209,7 @@ private:
 class worker : public Application
 {
 public:
-    worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m;);
+    worker (uint16_t tcpPort, uint16_t udpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
     virtual ~worker ();
     InetSocketAddress get_server_address();
 
@@ -363,7 +363,7 @@ main (int argc, char *argv[])
 
 client::client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip)
         : port (port),
-          s_port (s_port)
+          s_port (s_port),
           ip (ip)
 {
     std::srand (time(0));
@@ -402,7 +402,7 @@ client::StartApplication (void)
 }
 
 void
-client::HandleIncoming (void)
+client::HandleIncoming (Ptr<Socket> socket)
 {
     // TODO: implement
 }
