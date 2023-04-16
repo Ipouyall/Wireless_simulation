@@ -173,11 +173,11 @@ MyHeader::GetData (void) const
     return m_data;
 }
 
-class EncoderHeader : public Header 
+class EncodedHeader : public Header 
 {
 public:
-    EncoderHeader ();
-    virtual ~EncoderHeader ();
+    EncodedHeader ();
+    virtual ~EncodedHeader ();
     void SetData (std::string data);
     std::string GetData (void) const;
     static TypeId GetTypeId (void);
@@ -192,44 +192,44 @@ private:
 
 };
 
-EncoderHeader::EncoderHeader ()
+EncodedHeader::EncodedHeader ()
 {
 }
 
-EncoderHeader::~EncoderHeader ()
+EncodedHeader::~EncodedHeader ()
 {
 }
 
 TypeId
-EncoderHeader::GetTypeId (void)
+EncodedHeader::GetTypeId (void)
 {
-    static TypeId tid = TypeId ("ns3::EncoderHeader")
+    static TypeId tid = TypeId ("ns3::EncodedHeader")
         .SetParent<Header> ()
-        .AddConstructor<EncoderHeader> ()
+        .AddConstructor<EncodedHeader> ()
     ;
     return tid;
 }
 
 TypeId
-EncoderHeader::GetInstanceTypeId (void) const
+EncodedHeader::GetInstanceTypeId (void) const
 {
     return GetTypeId ();
 }
 
 void
-EncoderHeader::Print (std::ostream &os) const
+EncodedHeader::Print (std::ostream &os) const
 {
     os << "data = " << m_data << endl;
 }
 
 uint32_t
-EncoderHeader::GetSerializedSize (void) const
+EncodedHeader::GetSerializedSize (void) const
 {
     return sizeof(m_data) / sizeof(std::string);
 }
 
 void
-EncoderHeader::Serialize (Buffer::Iterator start) const
+EncodedHeader::Serialize (Buffer::Iterator start) const
 {
     // start.WriteHtonU16 (m_data);
     Buffer::Iterator it = start;
@@ -241,11 +241,8 @@ EncoderHeader::Serialize (Buffer::Iterator start) const
 }
 
 uint32_t
-EncoderHeader::Deserialize (Buffer::Iterator start)
+EncodedHeader::Deserialize (Buffer::Iterator start)
 {
-    // m_data = start.ReadNtohU16 ();
-
-    // return 2;
     Buffer::Iterator it = start;
 
     int length = GetSerializedSize();
@@ -259,13 +256,13 @@ EncoderHeader::Deserialize (Buffer::Iterator start)
 }
 
 void 
-EncoderHeader::SetData (std::string data)
+EncodedHeader::SetData (std::string data)
 {
     m_data = data;
 }
 
 std::string 
-EncoderHeader::GetData (void) const
+EncodedHeader::GetData (void) const
 {
     return m_data;
 }
@@ -273,11 +270,11 @@ EncoderHeader::GetData (void) const
 
 
 
-class DecoderHeader : public Header 
+class DecodedHeader : public Header 
 {
 public:
-    DecoderHeader ();
-    virtual ~DecoderHeader ();
+    DecodedHeader ();
+    virtual ~DecodedHeader ();
     void SetData (uint16_t data);
     void SetPort (uint16_t port);
     void SetIpv4 (Ipv4Address ipv4);
@@ -296,32 +293,32 @@ private:
     Ipv4Address m_ipv4;
 };
 
-DecoderHeader::DecoderHeader ()
+DecodedHeader::DecodedHeader ()
 {
 }
 
-DecoderHeader::~DecoderHeader ()
+DecodedHeader::~DecodedHeader ()
 {
 }
 
 TypeId
-DecoderHeader::GetTypeId (void)
+DecodedHeader::GetTypeId (void)
 {
-    static TypeId tid = TypeId ("ns3::DecoderHeader")
+    static TypeId tid = TypeId ("ns3::DecodedHeader")
         .SetParent<Header> ()
-        .AddConstructor<EncoderHeader> ()
+        .AddConstructor<EncodedHeader> ()
     ;
     return tid;
 }
 
 TypeId
-DecoderHeader::GetInstanceTypeId (void) const
+DecodedHeader::GetInstanceTypeId (void) const
 {
     return GetTypeId ();
 }
 
 void
-DecoderHeader::Print (std::ostream &os) const
+DecodedHeader::Print (std::ostream &os) const
 {
     os << "data = " << m_data << endl;
     os << "port = " << m_port << endl;
@@ -329,13 +326,13 @@ DecoderHeader::Print (std::ostream &os) const
 }
 
 uint32_t
-DecoderHeader::GetSerializedSize (void) const
+DecodedHeader::GetSerializedSize (void) const
 {
     return 2 + 2 + 4;
 }
 
 void
-DecoderHeader::Serialize (Buffer::Iterator start) const
+DecodedHeader::Serialize (Buffer::Iterator start) const
 {
     // start.WriteHtonU16 (m_data);
     Buffer::Iterator it = start;
@@ -345,7 +342,7 @@ DecoderHeader::Serialize (Buffer::Iterator start) const
 }
 
 uint32_t
-DecoderHeader::Deserialize (Buffer::Iterator start)
+DecodedHeader::Deserialize (Buffer::Iterator start)
 {
     // m_data = start.ReadNtohU16 ();
 
@@ -358,34 +355,34 @@ DecoderHeader::Deserialize (Buffer::Iterator start)
 }
 
 void 
-DecoderHeader::SetData (uint16_t data)
+DecodedHeader::SetData (uint16_t data)
 {
     m_data = data;
 }
 void
-DecoderHeader::SetPort (uint16_t port)
+DecodedHeader::SetPort (uint16_t port)
 {
     m_port = port;
 }
 void
-DecoderHeader::SetIpv4 (Ipv4Address ipv4)
+DecodedHeader::SetIpv4 (Ipv4Address ipv4)
 {
     m_ipv4 = ipv4;
 }
 
 uint16_t
-DecoderHeader::GetData (void) const
+DecodedHeader::GetData (void) const
 {
     return m_data;
 }
 uint16_t
-DecoderHeader::GetPort (void) const
+DecodedHeader::GetPort (void) const
 {
     return m_port;
 }
 
 Ipv4Address
-DecoderHeader::GetIpv4 (void) const
+DecodedHeader::GetIpv4 (void) const
 {
     return m_ipv4;
 }
@@ -721,25 +718,30 @@ worker::HandleRead (Ptr<Socket> socket)
 }
 
 void worker::ProcessData(Ptr<Packet> packet) 
-{   // TODO: implement
-    // TODO: use decoded header
+{
+    DecodedHeader d_header;
+    packet->RemoveHeader (d_header);
 
-    // initialize from packet's header
-    uint16_t key=44;
+    uint16_t key = d_header.m_data,
+             c_port = d_header.m_port;
+    Ipv4Address c_ipv4 = d_header.m_ipv4;
     string encoded = get_from_map (mapping, key);
     if (encoded == "") return;
 
-    // setup new header
+    Ptr<Packet> e_packet = new Packet();
+    EncodedHeader e_header;
+    e_header.SetData(encoded);
+    e_packet->AddHeader(e_header);
 
-    // Send the response to the client using UDP
     Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress remote_client (ip.GetAddress (0), udpPort);
+    InetSocketAddress remote_client (c_ipv4, c_port);
     udpSendSocket->Connect (remote_client);
-    udpSendSocket->Send (packet);
+    udpSendSocket->Send (e_packet);
     udpSendSocket->Close();
 }
 
 
-InetSocketAddress worker::get_server_address(){
+InetSocketAddress worker::get_server_address()
+{
     return InetSocketAddress (ip.GetAddress (0), tcpPort);
 }
