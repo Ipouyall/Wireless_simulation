@@ -223,7 +223,7 @@ EncodedHeader::Print (std::ostream &os) const
 uint32_t
 EncodedHeader::GetSerializedSize (void) const
 {
-    return sizeof(m_data) / sizeof(std::string);
+    return 1;
 }
 
 void
@@ -231,25 +231,15 @@ EncodedHeader::Serialize (Buffer::Iterator start) const
 {
     // start.WriteHtonU16 (m_data);
     Buffer::Iterator it = start;
-    int length = m_data.length();
-    const char* str = m_data.c_str();
-    for (int i = 0;i < length;i++){
-        it.WriteU8 (str[i]);
-    }
+    it.WriteU8 (m_data[0]);
 }
 
 uint32_t
 EncodedHeader::Deserialize (Buffer::Iterator start)
 {
     Buffer::Iterator it = start;
-
-    int length = GetSerializedSize();
-    char str[length + 1] = {0};
-    for (int i = 0;i < length;i++){
-      str[i] = it.ReadU8 ();
-    }
-    str[length] = '\0';
-    m_data = string (str);
+    char c = it.ReadU8 ();
+    m_data = string (1, c);
     return GetSerializedSize();
 }
 
@@ -404,7 +394,7 @@ private:
 class client : public Application
 {
 public:
-    client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip);
+    client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster,  Ipv4InterfaceContainer& ip);
     virtual ~client ();
     Ipv4Address getIP();
     uint16_t getPort();
@@ -417,7 +407,7 @@ private:
     uint16_t s_port;
     Ptr<Socket> socket;
     Ptr<Socket> server;
-    Ipv4InterfaceContainer ip;
+    Ipv4InterfaceContainer ip_master, ip;
     std::string encodedData;
 };
 
@@ -491,15 +481,14 @@ main (int argc, char *argv[])
     Ssid ssid = Ssid ("ns-3-ssid");
 
     mac.SetType ("ns3::StaWifiMac", "Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
-
     NetDeviceContainer staDeviceClient;
     staDeviceClient = wifi.Install (phy, mac, wifiStaNodeClient);
-    mac.SetType ("ns3::ApWifiMac", "Ssid", SsidValue (ssid));
 
+    mac.SetType ("ns3::ApWifiMac", "Ssid", SsidValue (ssid));
     NetDeviceContainer staDeviceMaster;
     staDeviceMaster = wifi.Install (phy, mac, wifiStaNodeMaster);
-    mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
+    mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
     NetDeviceContainer staDeviceWorker;
     staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
 
@@ -545,10 +534,10 @@ main (int argc, char *argv[])
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-    uint16_t client_master_port = 1102, worker_client_port = 1104;
-    uint16_t worker_ports[WORKER_COUNT]= {5050, 5051, 5052};
+    uint16_t client_master_port = 1102, worker_client_port = 1102;
+    uint16_t worker_ports[WORKER_COUNT]= {1105, 1105, 1105};
 
-    Ptr<client> clientApp = CreateObject<client> (client_master_port, worker_client_port, staNodesMasterInterface);
+    Ptr<client> clientApp = CreateObject<client> (client_master_port, worker_client_port, staNodesMasterInterface, staNodeClientInterface);
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
     clientApp->SetStartTime (Seconds (0.0));
     clientApp->SetStopTime (Seconds (duration));  
@@ -564,7 +553,7 @@ main (int argc, char *argv[])
     for(int i=0; i<WORKER_COUNT; i++)
     {
         Ptr<worker> workerApp = CreateObject<worker> (worker_ports[i], staNodesWorkerInterface, mappings[i]);
-        wifiStaNodeClient.Get (0)->AddApplication (workerApp);
+        wifiStaNodeWorker.Get (i)->AddApplication (workerApp);
         workerApp->SetStartTime (Seconds (0.0));
         workerApp->SetStopTime (Seconds (duration));
         InetSocketAddress waddr = workerApp->get_server_address();
@@ -587,9 +576,10 @@ main (int argc, char *argv[])
     return 0;
 }
 
-client::client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ip)
+client::client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster, Ipv4InterfaceContainer& ip)
         : port (port),
           s_port (s_port),
+          ip_master(ipMaster),
           ip (ip),
           encodedData("")
 {
@@ -620,7 +610,7 @@ void
 client::StartApplication (void)
 {
     Ptr<Socket> sock = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress sockAddr (ip.GetAddress(0), port);
+    InetSocketAddress sockAddr (ip_master.GetAddress(0), port);
     sock->Connect (sockAddr);
 
     server = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
@@ -648,16 +638,16 @@ client::HandleIncoming (Ptr<Socket> socket)
     Ptr<Packet> packet;
     while ((packet = socket->Recv ()))
     {
+        cout << "_______________________client received decoded_______________________________" << endl;
         if (packet->GetSize () == 0)
         {
             break;
         }
-        cout << "_______________________client received decoded_______________________________" << endl;
         EncodedHeader encoded;
         packet->RemoveHeader (encoded);
         encoded.Print(std::cout);
 
-        string ed = encoded.GetData();
+        auto ed = encoded.GetData();
         encodedData += ed;
     }
 }
@@ -742,10 +732,12 @@ worker::StartApplication (void)
     // Create TCP socket and set the options
     tcpSocket = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
     tcpSocket->Bind (InetSocketAddress (ip.GetAddress (0), tcpPort));
+    cout << "worker ip = "; ip.GetAddress (0).Print(cout);cout << endl;
+    cout << "worker port = " << tcpPort << endl;
     tcpSocket->Listen ();
+    cout << "_______________________worker start litened_______________________________" << endl;
     tcpSocket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
                              MakeCallback (&worker::HandleAccept, this));
-    // tcpSocket->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
 }
 
 void
@@ -799,5 +791,7 @@ worker::ProcessData(Ptr<Packet> packet)
 InetSocketAddress 
 worker::get_server_address()
 {
+    cout << "get_server_address:::worker ip = "; ip.GetAddress (0).Print(cout);cout << endl;
+    cout << "get_server_address:::worker port = " << tcpPort << endl;
     return InetSocketAddress (ip.GetAddress (0), tcpPort);
 }
