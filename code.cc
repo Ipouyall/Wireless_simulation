@@ -398,6 +398,7 @@ public:
 
 private:
     virtual void StartApplication(void);
+    virtual void StopApplication(void);
     void HandleIncoming(Ptr<Socket> socket);
 
     uint16_t port;
@@ -615,6 +616,12 @@ client::StartApplication(void)
     server->SetRecvCallback(MakeCallback(&client::HandleIncoming, this));
 
     GenerateTraffic(sock, 0);
+}
+
+void 
+client::StopApplication(void)
+{
+    std::cout << "[Client]:::[Encoded msg]:::[" << encodedData << "]" << std::endl;
 }
 
 Ipv4Address 
