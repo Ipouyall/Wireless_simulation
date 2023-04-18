@@ -468,7 +468,7 @@ main (int argc, char *argv[])
         {{0,"a"}, {3,"b"}, {4,"c"}, {11,"d"}, {19,"e"}, {22,"f"}, {23,"g"}, {24,"h"}},
         {{5,"i"}, {6,"j"}, {9,"k"}, {13,"l"}, {15,"m"}, {1,"n"}, {7,"o"}, {21,"p"}, {25,"q"}},
         {{2,"r"}, {8,"s"}, {10,"t"}, {14,"u"}, {12,"v"}, {16,"w"}, {17,"x"}, {18,"y"}, {20,"z"}},
-    }
+    };
 
     NodeContainer wifiStaNodeClient;
     wifiStaNodeClient.Create (1);
@@ -560,7 +560,7 @@ main (int argc, char *argv[])
     masterApp->SetStartTime (Seconds (0.0));
     masterApp->SetStopTime (Seconds (duration));  
 
-    vector<Ptr<worker>> workerApps
+    vector<Ptr<worker>> workerApps;
     for(int i=0; i<WORKER_COUNT; i++)
     {
         Ptr<worker> workerApp = CreateObject<worker> (worker_ports[i], staNodesWorkerInterface, mappings[i]);
@@ -763,6 +763,7 @@ void worker::ProcessData(Ptr<Packet> packet)
 {
     DecodedHeader d_header;
     packet->RemoveHeader (d_header);
+    d_header.Print();
 
     uint16_t key = d_header.GetData(),
              c_port = d_header.GetPort();
