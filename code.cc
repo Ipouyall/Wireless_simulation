@@ -502,7 +502,6 @@ main (int argc, char *argv[])
 
     NetDeviceContainer staDeviceWorker;
     staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
-    // mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
 
     Ptr<RateErrorModel> em = CreateObject<RateErrorModel> ();
     em->SetAttribute ("ErrorRate", DoubleValue (error));
@@ -567,7 +566,10 @@ main (int argc, char *argv[])
         Ptr<worker> workerApp = CreateObject<worker> (worker_ports[i], staNodesWorkerInterface, mappings[i]);
         wifiStaNodeClient.Get (0)->AddApplication (workerApp);
         workerApp->SetStartTime (Seconds (0.0));
-        workerApp->SetStopTime (Seconds (duration)); 
+        workerApp->SetStopTime (Seconds (duration));
+        InetSocketAddress waddr = workerApp->get_server_address();
+        masterApp->add_worker(waddr);
+        workerApps.push_back(workerApp);
     }
 
     NS_LOG_INFO ("Run Simulation");
@@ -736,7 +738,7 @@ worker::StartApplication (void)
     tcpSocket->Listen ();
     tcpSocket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
                              MakeCallback (&worker::HandleAccept, this));
-    tcpSocket->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
+    // tcpSocket->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
 }
 
 void
