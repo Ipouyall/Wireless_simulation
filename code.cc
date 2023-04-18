@@ -138,7 +138,7 @@ MyHeader::GetInstanceTypeId (void) const
 void
 MyHeader::Print (std::ostream &os) const
 {
-    os << "data = " << m_data << endl;
+    os << "[MyHeader]" << "data = " << m_data << endl;
 }
 
 uint32_t
@@ -217,7 +217,7 @@ EncodedHeader::GetInstanceTypeId (void) const
 void
 EncodedHeader::Print (std::ostream &os) const
 {
-    os << "data = " << m_data << endl;
+    os << "[EncodedHeader]"  << "data = " << m_data << endl;
 }
 
 uint32_t
@@ -315,9 +315,9 @@ DecodedHeader::GetInstanceTypeId (void) const
 void
 DecodedHeader::Print (std::ostream &os) const
 {
-    os << "data = " << m_data << endl;
-    os << "port = " << m_port << endl;
-    os << "ip = "; m_ipv4.Print(os); os << endl;
+    os << "[DecodedHeader]" << "data = " << m_data << endl;
+    os << "               " << "port = " << m_port << endl;
+    os << "               " << "ip = "; m_ipv4.Print(os); os << endl;
 }
 
 uint32_t
@@ -464,10 +464,11 @@ main (int argc, char *argv[])
         LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
     }
 
-    // map<uint16_t, string> mapping1, mapping2, mapping3;
-    // mapping1 = {{0,"a"}, {3,"b"}, {4,"c"}, {11,"d"}, {19,"e"}, {22,"f"}, {23,"g"}, {24,"h"}};
-    // mapping2 = {{5,"i"}, {6,"j"}, {9,"k"}, {13,"l"}, {15,"m"}, {1,"n"}, {7,"o"}, {21,"p"}, {25,"q"}};
-    // mapping3 = {{2,"r"}, {8,"s"}, {10,"t"}, {14,"u"}, {12,"v"}, {16,"w"}, {17,"x"}, {18,"y"}, {20,"z"}};
+    map<uint16_t, string> mappings[WORKER_COUNT] = {
+        {{0,"a"}, {3,"b"}, {4,"c"}, {11,"d"}, {19,"e"}, {22,"f"}, {23,"g"}, {24,"h"}},
+        {{5,"i"}, {6,"j"}, {9,"k"}, {13,"l"}, {15,"m"}, {1,"n"}, {7,"o"}, {21,"p"}, {25,"q"}},
+        {{2,"r"}, {8,"s"}, {10,"t"}, {14,"u"}, {12,"v"}, {16,"w"}, {17,"x"}, {18,"y"}, {20,"z"}},
+    }
 
     NodeContainer wifiStaNodeClient;
     wifiStaNodeClient.Create (1);
@@ -545,9 +546,8 @@ main (int argc, char *argv[])
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-    // TODO: Check from here, get workers' sockAddr to master
     uint16_t client_master_port = 1102, worker_client_port = 1104;
-    // uint16_t worker_ports[WORKER_COUNT]= {5050, 5051, 5052};
+    uint16_t worker_ports[WORKER_COUNT]= {5050, 5051, 5052};
 
     Ptr<client> clientApp = CreateObject<client> (client_master_port, worker_client_port, staNodesMasterInterface);
     wifiStaNodeClient.Get (0)->AddApplication (clientApp);
@@ -560,6 +560,15 @@ main (int argc, char *argv[])
     wifiStaNodeMaster.Get (0)->AddApplication (masterApp);
     masterApp->SetStartTime (Seconds (0.0));
     masterApp->SetStopTime (Seconds (duration));  
+
+    vector<Ptr<worker>> workerApps
+    for(int i=0; i<WORKER_COUNT; i++)
+    {
+        Ptr<worker> workerApp = CreateObject<worker> (worker_ports[i], staNodesWorkerInterface, mappings[i]);
+        wifiStaNodeClient.Get (0)->AddApplication (workerApp);
+        workerApp->SetStartTime (Seconds (0.0));
+        workerApp->SetStopTime (Seconds (duration)); 
+    }
 
     NS_LOG_INFO ("Run Simulation");
 
