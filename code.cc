@@ -600,7 +600,8 @@ client::~client ()
 {
 }
 
-static void GenerateTraffic (Ptr<Socket> socket, uint16_t data)
+static void 
+GenerateTraffic (Ptr<Socket> socket, uint16_t data)
 {
     Ptr<Packet> packet = new Packet();
     MyHeader m;
@@ -630,7 +631,8 @@ client::StartApplication (void)
     GenerateTraffic(sock, 0);
 }
 
-Ipv4Address client::getIP()
+Ipv4Address 
+client::getIP()
 {
     return ip.GetAddress(0);
 }
@@ -678,6 +680,7 @@ master::add_worker(InetSocketAddress waddr)
 {
     Ptr<Socket> remote = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
     remote->Connect (waddr);
+    cout << "_______________________master connecting to worker_______________________________" << endl;
     worker_sockets.push_back(remote);
 }
 
@@ -766,7 +769,8 @@ worker::HandleRead (Ptr<Socket> socket)
     }
 }
 
-void worker::ProcessData(Ptr<Packet> packet) 
+void 
+worker::ProcessData(Ptr<Packet> packet) 
 {
     DecodedHeader d_header;
     packet->RemoveHeader (d_header);
@@ -792,7 +796,8 @@ void worker::ProcessData(Ptr<Packet> packet)
 }
 
 
-InetSocketAddress worker::get_server_address()
+InetSocketAddress 
+worker::get_server_address()
 {
     return InetSocketAddress (ip.GetAddress (0), tcpPort);
 }
