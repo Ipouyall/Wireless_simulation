@@ -608,7 +608,9 @@ static void GenerateTraffic (Ptr<Socket> socket, uint16_t data)
 
     packet->AddHeader (m);
     packet->Print (std::cout);
+
     socket->Send(packet);
+    cout << "_______________________Trafic sent from client_______________________________" << endl;
 
     Simulator::Schedule (Seconds (0.1), &GenerateTraffic, socket, rand() % 26);
 }
@@ -648,7 +650,7 @@ client::HandleIncoming (Ptr<Socket> socket)
         {
             break;
         }
-
+        cout << "_______________________client received decoded_______________________________" << endl;
         EncodedHeader encoded;
         packet->RemoveHeader (encoded);
         encoded.Print(std::cout);
@@ -700,6 +702,7 @@ master::HandleRead (Ptr<Socket> socket)
         {
             break;
         }
+        cout << "_______________________master received from client_______________________________" << endl;
         MyHeader m_header;
         packet->RemoveHeader (m_header);
         m_header.Print(std::cout);
@@ -714,6 +717,7 @@ master::HandleRead (Ptr<Socket> socket)
             Ptr<Packet> packet = new Packet();
             packet->AddHeader(d_header);
             w->Send (packet);
+            cout << "_______________________master send to worker_______________________________" << endl;
         }
     }
 }
@@ -744,6 +748,7 @@ worker::StartApplication (void)
 void
 worker::HandleAccept (Ptr<Socket> sock, const Address &from)
 {
+    cout << "_______________________worker connected to master_______________________________" << endl;
   sock->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
 }
 
@@ -754,7 +759,9 @@ worker::HandleRead (Ptr<Socket> socket)
 
     while ((packet = socket->Recv ()))
     {
+        cout << "_______________________worker received from master_______________________________" << endl;
         if (packet->GetSize () == 0) break;
+        
         ProcessData(packet);
     }
 }
@@ -763,7 +770,7 @@ void worker::ProcessData(Ptr<Packet> packet)
 {
     DecodedHeader d_header;
     packet->RemoveHeader (d_header);
-    d_header.Print();
+    d_header.Print(std::cout);
 
     uint16_t key = d_header.GetData(),
              c_port = d_header.GetPort();
@@ -780,6 +787,7 @@ void worker::ProcessData(Ptr<Packet> packet)
     InetSocketAddress remote_client (c_ipv4, c_port);
     udpSendSocket->Connect (remote_client);
     udpSendSocket->Send (e_packet);
+    cout << "_______________________Worker send to client_______________________________" << endl;
     udpSendSocket->Close();
 }
 
