@@ -394,7 +394,6 @@ public:
 
 private:
     virtual void StartApplication(void);
-    virtual void StopApplication(void);
     void HandleIncoming(Ptr<Socket> socket);
 
     uint16_t port;
@@ -529,8 +528,8 @@ main(int argc, char *argv[])
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
-    uint16_t client_master_port = 1102, worker_client_port = 1102;
-    uint16_t worker_ports[WORKER_COUNT]= {1105, 1105, 1105};
+    uint16_t client_master_port = 1102, worker_client_port = 1103;
+    uint16_t worker_ports[WORKER_COUNT]= {1105, 1106, 1107};
 
     Ptr<client> clientApp = CreateObject<client>(client_master_port, worker_client_port, staNodesMasterInterface, staNodeClientInterface);
     wifiStaNodeClient.Get(0)->AddApplication(clientApp);
@@ -583,6 +582,7 @@ client::client(uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster,
 
 client::~client()
 {
+    std::cout << "[Client]:::[Encoded msg]:::[" << encodedData << "]" << std::endl;
 }
 
 static void 
@@ -613,12 +613,6 @@ client::StartApplication(void)
     server->SetRecvCallback(MakeCallback(&client::HandleIncoming, this));
 
     GenerateTraffic(sock, 0);
-}
-
-void 
-client::StopApplication(void)
-{
-    std::cout << "[Client]:::[Encoded msg]:::[" << encodedData << "]" << std::endl;
 }
 
 Ipv4Address 
