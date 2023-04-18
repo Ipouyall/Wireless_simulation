@@ -88,9 +88,9 @@ AverageDelayMonitor(FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, doubl
     Simulator::Schedule(Seconds(10),&AverageDelayMonitor, fmhelper, flowMon, em);
 }
 
-string get_from_map(map<uint16_t, string> m, uint16_t key) {
+char get_from_map(map<uint16_t, char> m, uint16_t key) {
     if (m.find(key) == m.end())
-        return "";
+        return '\0';
     return m[key];
 }
 
@@ -178,8 +178,8 @@ class EncodedHeader : public Header
 public:
     EncodedHeader();
     virtual ~EncodedHeader();
-    void SetData(std::string data);
-    std::string GetData(void) const;
+    void SetData(char data);
+    char GetData(void) const;
     static TypeId GetTypeId(void);
     virtual TypeId GetInstanceTypeId(void) const;
     virtual void Print(std::ostream &os) const;
@@ -187,7 +187,7 @@ public:
     virtual uint32_t Deserialize(Buffer::Iterator start);
     virtual uint32_t GetSerializedSize(void) const;
 private:
-    std::string m_data;
+    char m_data;
 };
 
 EncodedHeader::EncodedHeader()
@@ -229,27 +229,23 @@ EncodedHeader::GetSerializedSize(void) const
 void
 EncodedHeader::Serialize(Buffer::Iterator start) const
 {
-    // start.WriteHtonU16 (m_data);
-    Buffer::Iterator it = start;
-    it.WriteU8(m_data[0]);
+    start.WriteU8(m_data);
 }
 
 uint32_t
 EncodedHeader::Deserialize(Buffer::Iterator start)
 {
-    Buffer::Iterator it = start;
-    char c = it.ReadU8();
-    m_data = string(1, c);
+    m_data = start.ReadU8();
     return GetSerializedSize();
 }
 
 void 
-EncodedHeader::SetData(std::string data)
+EncodedHeader::SetData(char data)
 {
     m_data = data;
 }
 
-std::string 
+char
 EncodedHeader::GetData(void) const
 {
     return m_data;
@@ -412,7 +408,7 @@ private:
 class worker : public Application
 {
 public:
-    worker(uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
+    worker(uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, char> m);
     virtual ~worker();
     InetSocketAddress get_server_address();
 
@@ -425,7 +421,7 @@ private:
     uint16_t tcpPort;
     Ipv4InterfaceContainer ip;
     Ptr<Socket> tcpSocket;
-    map<uint16_t, string> mapping;
+    map<uint16_t, char> mapping;
 };
 
 
@@ -437,6 +433,7 @@ main(int argc, char *argv[])
     bool verbose = true;
     double duration = 60.0;
     bool tracing = false;
+    
 
     srand(time(NULL));
 
@@ -452,10 +449,10 @@ main(int argc, char *argv[])
         LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
     }
 
-    map<uint16_t, string> mappings[WORKER_COUNT] = {
-        {{0,"a"}, {3,"b"}, {4,"c"}, {11,"d"}, {19,"e"}, {22,"f"}, {23,"g"}, {24,"h"}},
-        {{5,"i"}, {6,"j"}, {9,"k"}, {13,"l"}, {15,"m"}, {1,"n"}, {7,"o"}, {21,"p"}, {25,"q"}},
-        {{2,"r"}, {8,"s"}, {10,"t"}, {14,"u"}, {12,"v"}, {16,"w"}, {17,"x"}, {18,"y"}, {20,"z"}},
+    map<uint16_t, char> mappings[WORKER_COUNT] = {
+        {{0,'a'}, {3,'b'}, {4,'c'}, {11,'d'}, {19,'e'}, {22,'f'}, {23, 'g'}, {24, 'h'}},
+        {{5,'i'}, {6,'j'}, {9,'k'}, {13,'l'}, {15,'m'}, {1,'n'}, {7, 'o'}, {21,'p'}, {25, 'q'}},
+        {{2,'r'}, {8,'s'}, {10,'t'}, {14,'u'}, {12,'v'}, {16,'w'}, {17,'x'}, {18, 'y'}, {20, 'z'}},
     };
 
     NodeContainer wifiStaNodeClient;
@@ -711,7 +708,7 @@ master::HandleRead(Ptr<Socket> socket)
     }
 }
 
-worker::worker(uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
+worker::worker(uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, char> m)
   : tcpPort(tcpPort),
     ip(ip),
     mapping(m)
@@ -762,8 +759,8 @@ worker::ProcessData(Ptr<Packet> packet)
     uint16_t key = d_header.GetData(),
              c_port = d_header.GetPort();
     Ipv4Address c_ipv4 = d_header.GetIpv4();
-    string encoded = get_from_map(mapping, key);
-    if (encoded == "") return;
+    char encoded = get_from_map(mapping, key);
+    if (encoded == '\0') return;
 
     Ptr<Packet> e_packet = new Packet();
     EncodedHeader e_header;
