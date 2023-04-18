@@ -33,62 +33,62 @@
 
 using namespace ns3;
 using namespace std;
-NS_LOG_COMPONENT_DEFINE ("WifiTopology");
+NS_LOG_COMPONENT_DEFINE("WifiTopology");
 
 void
-ThroughputMonitor (FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, double em)
+ThroughputMonitor(FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, double em)
 {
     uint16_t i = 0;
 
-    std::map<FlowId, FlowMonitor::FlowStats> flowStats = flowMon->GetFlowStats ();
+    std::map<FlowId, FlowMonitor::FlowStats> flowStats = flowMon->GetFlowStats();
 
-    Ptr<Ipv4FlowClassifier> classing = DynamicCast<Ipv4FlowClassifier> (fmhelper->GetClassifier ());
-    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator stats = flowStats.begin (); stats != flowStats.end (); ++stats)
+    Ptr<Ipv4FlowClassifier> classing = DynamicCast<Ipv4FlowClassifier>(fmhelper->GetClassifier ());
+    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator stats = flowStats.begin(); stats != flowStats.end(); ++stats)
     {
-        Ipv4FlowClassifier::FiveTuple fiveTuple = classing->FindFlow (stats->first);
+        Ipv4FlowClassifier::FiveTuple fiveTuple = classing->FindFlow(stats->first);
 
         std::cout << "Flow ID			: "<< stats->first << " ; " << fiveTuple.sourceAddress << " -----> " << fiveTuple.destinationAddress << std::endl;
         std::cout << "Tx Packets = " << stats->second.txPackets << std::endl;
         std::cout << "Rx Packets = " << stats->second.rxPackets << std::endl;
-        std::cout << "Duration		: "<< (stats->second.timeLastRxPacket.GetSeconds () - stats->second.timeFirstTxPacket.GetSeconds ()) << std::endl;
-        std::cout << "Last Received Packet	: "<< stats->second.timeLastRxPacket.GetSeconds () << " Seconds" << std::endl;
-        std::cout << "Throughput: " << stats->second.rxBytes * 8.0 / (stats->second.timeLastRxPacket.GetSeconds () - stats->second.timeFirstTxPacket.GetSeconds ()) / 1024 / 1024  << " Mbps" << std::endl;
+        std::cout << "Duration		: "<< (stats->second.timeLastRxPacket.GetSeconds() - stats->second.timeFirstTxPacket.GetSeconds()) << std::endl;
+        std::cout << "Last Received Packet	: "<< stats->second.timeLastRxPacket.GetSeconds() << " Seconds" << std::endl;
+        std::cout << "Throughput: " << stats->second.rxBytes * 8.0 / (stats->second.timeLastRxPacket.GetSeconds() - stats->second.timeFirstTxPacket.GetSeconds()) / 1024 / 1024  << " Mbps" << std::endl;
     
         i++;
 
         std::cout << "---------------------------------------------------------------------------" << std::endl;
     }
 
-    Simulator::Schedule (Seconds (10),&ThroughputMonitor, fmhelper, flowMon, em);
+    Simulator::Schedule(Seconds (10),&ThroughputMonitor, fmhelper, flowMon, em);
 }
 
 void
-AverageDelayMonitor (FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, double em)
+AverageDelayMonitor(FlowMonitorHelper *fmhelper, Ptr<FlowMonitor> flowMon, double em)
 {
     uint16_t i = 0;
 
-    std::map<FlowId, FlowMonitor::FlowStats> flowStats = flowMon->GetFlowStats ();
-    Ptr<Ipv4FlowClassifier> classing = DynamicCast<Ipv4FlowClassifier> (fmhelper->GetClassifier ());
-    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator stats = flowStats.begin (); stats != flowStats.end (); ++stats)
+    std::map<FlowId, FlowMonitor::FlowStats> flowStats = flowMon->GetFlowStats();
+    Ptr<Ipv4FlowClassifier> classing = DynamicCast<Ipv4FlowClassifier>(fmhelper->GetClassifier());
+    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator stats = flowStats.begin(); stats != flowStats.end(); ++stats)
     {
-        Ipv4FlowClassifier::FiveTuple fiveTuple = classing->FindFlow (stats->first);
+        Ipv4FlowClassifier::FiveTuple fiveTuple = classing->FindFlow(stats->first);
         std::cout << "Flow ID			: "<< stats->first << " ; " << fiveTuple.sourceAddress << " -----> " << fiveTuple.destinationAddress << std::endl;
         std::cout << "Tx Packets = " << stats->second.txPackets << std::endl;
         std::cout << "Rx Packets = " << stats->second.rxPackets << std::endl;
-        std::cout << "Duration		: "<< (stats->second.timeLastRxPacket.GetSeconds () - stats->second.timeFirstTxPacket.GetSeconds ()) << std::endl;
-        std::cout << "Last Received Packet	: "<< stats->second.timeLastRxPacket.GetSeconds () << " Seconds" << std::endl;
-        std::cout << "Sum of e2e Delay: " << stats->second.delaySum.GetSeconds () << " s" << std::endl;
-        std::cout << "Average of e2e Delay: " << stats->second.delaySum.GetSeconds () / stats->second.rxPackets << " s" << std::endl;
+        std::cout << "Duration		: "<< (stats->second.timeLastRxPacket.GetSeconds() - stats->second.timeFirstTxPacket.GetSeconds()) << std::endl;
+        std::cout << "Last Received Packet	: "<< stats->second.timeLastRxPacket.GetSeconds() << " Seconds" << std::endl;
+        std::cout << "Sum of e2e Delay: " << stats->second.delaySum.GetSeconds() << " s" << std::endl;
+        std::cout << "Average of e2e Delay: " << stats->second.delaySum.GetSeconds() / stats->second.rxPackets << " s" << std::endl;
     
         i++;
 
         std::cout << "---------------------------------------------------------------------------" << std::endl;
     }
 
-    Simulator::Schedule (Seconds (10),&AverageDelayMonitor, fmhelper, flowMon, em);
+    Simulator::Schedule(Seconds(10),&AverageDelayMonitor, fmhelper, flowMon, em);
 }
 
-string get_from_map (map<uint16_t, string> m, uint16_t key) {
+string get_from_map(map<uint16_t, string> m, uint16_t key) {
     if (m.find(key) == m.end())
         return "";
     return m[key];
@@ -97,78 +97,78 @@ string get_from_map (map<uint16_t, string> m, uint16_t key) {
 class MyHeader : public Header 
 {
 public:
-    MyHeader ();
-    virtual ~MyHeader ();
-    void SetData (uint16_t data);
-    uint16_t GetData (void) const;
-    static TypeId GetTypeId (void);
-    virtual TypeId GetInstanceTypeId (void) const;
-    virtual void Print (std::ostream &os) const;
-    virtual void Serialize (Buffer::Iterator start) const;
-    virtual uint32_t Deserialize (Buffer::Iterator start);
-    virtual uint32_t GetSerializedSize (void) const;
+    MyHeader();
+    virtual ~MyHeader();
+    void SetData(uint16_t data);
+    uint16_t GetData(void) const;
+    static TypeId GetTypeId(void);
+    virtual TypeId GetInstanceTypeId(void) const;
+    virtual void Print(std::ostream &os) const;
+    virtual void Serialize(Buffer::Iterator start) const;
+    virtual uint32_t Deserialize(Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize(void) const;
 private:
     uint16_t m_data;
 };
 
-MyHeader::MyHeader ()
+MyHeader::MyHeader()
 {
 }
 
-MyHeader::~MyHeader ()
+MyHeader::~MyHeader()
 {
 }
 
 TypeId
-MyHeader::GetTypeId (void)
+MyHeader::GetTypeId(void)
 {
-    static TypeId tid = TypeId ("ns3::MyHeader")
-        .SetParent<Header> ()
-        .AddConstructor<MyHeader> ()
+    static TypeId tid = TypeId("ns3::MyHeader")
+        .SetParent<Header>()
+        .AddConstructor<MyHeader>()
     ;
     return tid;
 }
 
 TypeId
-MyHeader::GetInstanceTypeId (void) const
+MyHeader::GetInstanceTypeId(void) const
 {
-    return GetTypeId ();
+    return GetTypeId();
 }
 
 void
-MyHeader::Print (std::ostream &os) const
+MyHeader::Print(std::ostream &os) const
 {
     os << "[MyHeader]" << "data = " << m_data << endl;
 }
 
 uint32_t
-MyHeader::GetSerializedSize (void) const
+MyHeader::GetSerializedSize(void) const
 {
     return 2;
 }
 
 void
-MyHeader::Serialize (Buffer::Iterator start) const
+MyHeader::Serialize(Buffer::Iterator start) const
 {
-    start.WriteHtonU16 (m_data);
+    start.WriteHtonU16(m_data);
 }
 
 uint32_t
-MyHeader::Deserialize (Buffer::Iterator start)
+MyHeader::Deserialize(Buffer::Iterator start)
 {
-    m_data = start.ReadNtohU16 ();
+    m_data = start.ReadNtohU16();
 
     return 2;
 }
 
 void 
-MyHeader::SetData (uint16_t data)
+MyHeader::SetData(uint16_t data)
 {
     m_data = data;
 }
 
 uint16_t 
-MyHeader::GetData (void) const
+MyHeader::GetData(void) const
 {
     return m_data;
 }
@@ -176,81 +176,81 @@ MyHeader::GetData (void) const
 class EncodedHeader : public Header 
 {
 public:
-    EncodedHeader ();
-    virtual ~EncodedHeader ();
-    void SetData (std::string data);
-    std::string GetData (void) const;
-    static TypeId GetTypeId (void);
-    virtual TypeId GetInstanceTypeId (void) const;
-    virtual void Print (std::ostream &os) const;
-    virtual void Serialize (Buffer::Iterator start) const;
-    virtual uint32_t Deserialize (Buffer::Iterator start);
-    virtual uint32_t GetSerializedSize (void) const;
+    EncodedHeader();
+    virtual ~EncodedHeader();
+    void SetData(std::string data);
+    std::string GetData(void) const;
+    static TypeId GetTypeId(void);
+    virtual TypeId GetInstanceTypeId(void) const;
+    virtual void Print(std::ostream &os) const;
+    virtual void Serialize(Buffer::Iterator start) const;
+    virtual uint32_t Deserialize(Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize(void) const;
 private:
     std::string m_data;
 };
 
-EncodedHeader::EncodedHeader ()
+EncodedHeader::EncodedHeader()
 {
 }
 
-EncodedHeader::~EncodedHeader ()
+EncodedHeader::~EncodedHeader()
 {
 }
 
 TypeId
-EncodedHeader::GetTypeId (void)
+EncodedHeader::GetTypeId(void)
 {
-    static TypeId tid = TypeId ("ns3::EncodedHeader")
-        .SetParent<Header> ()
-        .AddConstructor<EncodedHeader> ()
+    static TypeId tid = TypeId("ns3::EncodedHeader")
+        .SetParent<Header>()
+        .AddConstructor<EncodedHeader>()
     ;
     return tid;
 }
 
 TypeId
-EncodedHeader::GetInstanceTypeId (void) const
+EncodedHeader::GetInstanceTypeId(void) const
 {
-    return GetTypeId ();
+    return GetTypeId();
 }
 
 void
-EncodedHeader::Print (std::ostream &os) const
+EncodedHeader::Print(std::ostream &os) const
 {
     os << "[EncodedHeader]"  << "data = " << m_data << endl;
 }
 
 uint32_t
-EncodedHeader::GetSerializedSize (void) const
+EncodedHeader::GetSerializedSize(void) const
 {
     return 1;
 }
 
 void
-EncodedHeader::Serialize (Buffer::Iterator start) const
+EncodedHeader::Serialize(Buffer::Iterator start) const
 {
     // start.WriteHtonU16 (m_data);
     Buffer::Iterator it = start;
-    it.WriteU8 (m_data[0]);
+    it.WriteU8(m_data[0]);
 }
 
 uint32_t
-EncodedHeader::Deserialize (Buffer::Iterator start)
+EncodedHeader::Deserialize(Buffer::Iterator start)
 {
     Buffer::Iterator it = start;
-    char c = it.ReadU8 ();
-    m_data = string (1, c);
+    char c = it.ReadU8();
+    m_data = string(1, c);
     return GetSerializedSize();
 }
 
 void 
-EncodedHeader::SetData (std::string data)
+EncodedHeader::SetData(std::string data)
 {
     m_data = data;
 }
 
 std::string 
-EncodedHeader::GetData (void) const
+EncodedHeader::GetData(void) const
 {
     return m_data;
 }
@@ -258,52 +258,52 @@ EncodedHeader::GetData (void) const
 class DecodedHeader : public Header 
 {
 public:
-    DecodedHeader ();
-    virtual ~DecodedHeader ();
-    void SetData (uint16_t data);
-    void SetPort (uint16_t port);
-    void SetIpv4 (Ipv4Address ipv4);
-    uint16_t GetData (void) const;
-    uint16_t GetPort (void) const;
-    Ipv4Address GetIpv4 (void) const;
-    static TypeId GetTypeId (void);
-    virtual TypeId GetInstanceTypeId (void) const;
-    virtual void Print (std::ostream &os) const;
-    virtual void Serialize (Buffer::Iterator start) const;
-    virtual uint32_t Deserialize (Buffer::Iterator start);
-    virtual uint32_t GetSerializedSize (void) const;
+    DecodedHeader();
+    virtual ~DecodedHeader();
+    void SetData(uint16_t data);
+    void SetPort(uint16_t port);
+    void SetIpv4(Ipv4Address ipv4);
+    uint16_t GetData(void) const;
+    uint16_t GetPort(void) const;
+    Ipv4Address GetIpv4(void) const;
+    static TypeId GetTypeId(void);
+    virtual TypeId GetInstanceTypeId(void) const;
+    virtual void Print(std::ostream &os) const;
+    virtual void Serialize(Buffer::Iterator start) const;
+    virtual uint32_t Deserialize(Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize(void) const;
 private:
     uint16_t m_data;
     uint16_t m_port;
     Ipv4Address m_ipv4;
 };
 
-DecodedHeader::DecodedHeader ()
+DecodedHeader::DecodedHeader()
 {
 }
 
-DecodedHeader::~DecodedHeader ()
+DecodedHeader::~DecodedHeader()
 {
 }
 
 TypeId
-DecodedHeader::GetTypeId (void)
+DecodedHeader::GetTypeId(void)
 {
-    static TypeId tid = TypeId ("ns3::DecodedHeader")
-        .SetParent<Header> ()
-        .AddConstructor<EncodedHeader> ()
+    static TypeId tid = TypeId("ns3::DecodedHeader")
+        .SetParent<Header>()
+        .AddConstructor<EncodedHeader>()
     ;
     return tid;
 }
 
 TypeId
-DecodedHeader::GetInstanceTypeId (void) const
+DecodedHeader::GetInstanceTypeId(void) const
 {
-    return GetTypeId ();
+    return GetTypeId();
 }
 
 void
-DecodedHeader::Print (std::ostream &os) const
+DecodedHeader::Print(std::ostream &os) const
 {
     os << "[DecodedHeader]" << "data = " << m_data << endl;
     os << "               " << "port = " << m_port << endl;
@@ -311,63 +311,60 @@ DecodedHeader::Print (std::ostream &os) const
 }
 
 uint32_t
-DecodedHeader::GetSerializedSize (void) const
+DecodedHeader::GetSerializedSize(void) const
 {
     return 2 + 2 + 4;
 }
 
 void
-DecodedHeader::Serialize (Buffer::Iterator start) const
+DecodedHeader::Serialize(Buffer::Iterator start) const
 {
-    // start.WriteHtonU16 (m_data);
+    // start.WriteHtonU16(m_data);
     Buffer::Iterator it = start;
-    it.WriteHtonU16 (m_data);
-    it.WriteHtonU16 (m_port);
-    WriteTo (it, m_ipv4);
+    it.WriteHtonU16(m_data);
+    it.WriteHtonU16(m_port);
+    WriteTo(it, m_ipv4);
 }
 
 uint32_t
-DecodedHeader::Deserialize (Buffer::Iterator start)
+DecodedHeader::Deserialize(Buffer::Iterator start)
 {
-    // m_data = start.ReadNtohU16 ();
-
-    // return 2;
     Buffer::Iterator it = start;
-    m_data = it.ReadNtohU16 ();
-    m_port = it.ReadNtohU16 ();
-    ReadFrom (it, m_ipv4);
+    m_data = it.ReadNtohU16();
+    m_port = it.ReadNtohU16();
+    ReadFrom(it, m_ipv4);
     return GetSerializedSize();
 }
 
 void 
-DecodedHeader::SetData (uint16_t data)
+DecodedHeader::SetData(uint16_t data)
 {
     m_data = data;
 }
 void
-DecodedHeader::SetPort (uint16_t port)
+DecodedHeader::SetPort(uint16_t port)
 {
     m_port = port;
 }
 void
-DecodedHeader::SetIpv4 (Ipv4Address ipv4)
+DecodedHeader::SetIpv4(Ipv4Address ipv4)
 {
     m_ipv4 = ipv4;
 }
 
 uint16_t
-DecodedHeader::GetData (void) const
+DecodedHeader::GetData(void) const
 {
     return m_data;
 }
 uint16_t
-DecodedHeader::GetPort (void) const
+DecodedHeader::GetPort(void) const
 {
     return m_port;
 }
 
 Ipv4Address
-DecodedHeader::GetIpv4 (void) const
+DecodedHeader::GetIpv4(void) const
 {
     return m_ipv4;
 }
@@ -376,12 +373,12 @@ DecodedHeader::GetIpv4 (void) const
 class master : public Application
 {
 public:
-    master (uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port);
-    virtual ~master ();
+    master(uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port);
+    virtual ~master();
     void add_worker(InetSocketAddress waddr);
 private:
-    virtual void StartApplication (void);
-    void HandleRead (Ptr<Socket> socket);
+    virtual void StartApplication(void);
+    void HandleRead(Ptr<Socket> socket);
 
     uint16_t port;
     Ipv4InterfaceContainer ip;
@@ -394,14 +391,14 @@ private:
 class client : public Application
 {
 public:
-    client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster,  Ipv4InterfaceContainer& ip);
-    virtual ~client ();
+    client(uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster,  Ipv4InterfaceContainer& ip);
+    virtual ~client();
     Ipv4Address getIP();
     uint16_t getPort();
 
 private:
-    virtual void StartApplication (void);
-    void HandleIncoming (Ptr<Socket> socket);
+    virtual void StartApplication(void);
+    void HandleIncoming(Ptr<Socket> socket);
 
     uint16_t port;
     uint16_t s_port;
@@ -414,15 +411,15 @@ private:
 class worker : public Application
 {
 public:
-    worker (uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
-    virtual ~worker ();
+    worker(uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m);
+    virtual ~worker();
     InetSocketAddress get_server_address();
 
 private:
-    virtual void StartApplication (void);
-    void HandleRead (Ptr<Socket> socket);
-    void ProcessData (Ptr<Packet> packet);
-    void HandleAccept (Ptr<Socket> sock, const Address &from);
+    virtual void StartApplication(void);
+    void HandleRead(Ptr<Socket> socket);
+    void ProcessData(Ptr<Packet> packet);
+    void HandleAccept(Ptr<Socket> sock, const Address &from);
 
     uint16_t tcpPort;
     Ipv4InterfaceContainer ip;
@@ -432,7 +429,7 @@ private:
 
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     double error = 0.000001;
     string bandwidth = "1Mbps";
@@ -442,16 +439,16 @@ main (int argc, char *argv[])
 
     srand(time(NULL));
 
-    CommandLine cmd (__FILE__);
-    cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
-    cmd.AddValue ("tracing", "Enable pcap tracing", tracing);
+    CommandLine cmd(__FILE__);
+    cmd.AddValue("verbose", "Tell echo applications to log if true", verbose);
+    cmd.AddValue("tracing", "Enable pcap tracing", tracing);
 
-    cmd.Parse (argc,argv);
+    cmd.Parse(argc,argv);
 
     if (verbose)
     {
-        LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
-        LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
+        LogComponentEnable("UdpEchoClientApplication", LOG_LEVEL_INFO);
+        LogComponentEnable("UdpEchoServerApplication", LOG_LEVEL_INFO);
     }
 
     map<uint16_t, string> mappings[WORKER_COUNT] = {
@@ -461,65 +458,65 @@ main (int argc, char *argv[])
     };
 
     NodeContainer wifiStaNodeClient;
-    wifiStaNodeClient.Create (1);
+    wifiStaNodeClient.Create(1);
 
     NodeContainer wifiStaNodeMaster;
-    wifiStaNodeMaster.Create (1);
+    wifiStaNodeMaster.Create(1);
 
     NodeContainer wifiStaNodeWorker;
-    wifiStaNodeWorker.Create (WORKER_COUNT);
+    wifiStaNodeWorker.Create(WORKER_COUNT);
 
-    YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
+    YansWifiChannelHelper channel = YansWifiChannelHelper::Default();
 
     YansWifiPhyHelper phy;
-    phy.SetChannel (channel.Create ());
+    phy.SetChannel(channel.Create());
 
     WifiHelper wifi;
-    wifi.SetRemoteStationManager ("ns3::AarfWifiManager");
+    wifi.SetRemoteStationManager("ns3::AarfWifiManager");
 
     WifiMacHelper mac;
-    Ssid ssid = Ssid ("ns-3-ssid");
+    Ssid ssid = Ssid("ns-3-ssid");
 
-    mac.SetType ("ns3::StaWifiMac", "Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
+    mac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid), "ActiveProbing", BooleanValue(false));
     NetDeviceContainer staDeviceClient;
-    staDeviceClient = wifi.Install (phy, mac, wifiStaNodeClient);
+    staDeviceClient = wifi.Install(phy, mac, wifiStaNodeClient);
 
-    mac.SetType ("ns3::ApWifiMac", "Ssid", SsidValue (ssid));
+    mac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid));
     NetDeviceContainer staDeviceMaster;
-    staDeviceMaster = wifi.Install (phy, mac, wifiStaNodeMaster);
+    staDeviceMaster = wifi.Install(phy, mac, wifiStaNodeMaster);
 
-    mac.SetType ("ns3::StaWifiMac","Ssid", SsidValue (ssid), "ActiveProbing", BooleanValue (false));
+    mac.SetType("ns3::StaWifiMac","Ssid", SsidValue(ssid), "ActiveProbing", BooleanValue(false));
     NetDeviceContainer staDeviceWorker;
-    staDeviceWorker = wifi.Install (phy, mac, wifiStaNodeWorker);
+    staDeviceWorker = wifi.Install(phy, mac, wifiStaNodeWorker);
 
-    Ptr<RateErrorModel> em = CreateObject<RateErrorModel> ();
-    em->SetAttribute ("ErrorRate", DoubleValue (error));
+    Ptr<RateErrorModel> em = CreateObject<RateErrorModel>();
+    em->SetAttribute("ErrorRate", DoubleValue(error));
     phy.SetErrorRateModel("ns3::YansErrorRateModel");
 
     MobilityHelper mobility;
 
-    mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
-                                   "MinX", DoubleValue (0.0),
-                                   "MinY", DoubleValue (0.0),
-                                   "DeltaX", DoubleValue (5.0),
-                                   "DeltaY", DoubleValue (10.0),
-                                   "GridWidth", UintegerValue (3),
-                                   "LayoutType", StringValue ("RowFirst"));
+    mobility.SetPositionAllocator("ns3::GridPositionAllocator",
+                                   "MinX", DoubleValue(0.0),
+                                   "MinY", DoubleValue(0.0),
+                                   "DeltaX", DoubleValue(5.0),
+                                   "DeltaY", DoubleValue(10.0),
+                                   "GridWidth", UintegerValue(3),
+                                   "LayoutType", StringValue("RowFirst"));
 
-    mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
-                               "Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
-    mobility.Install (wifiStaNodeClient);
+    mobility.SetMobilityModel("ns3::RandomWalk2dMobilityModel",
+                               "Bounds", RectangleValue(Rectangle(-50, 50, -50, 50)));
+    mobility.Install(wifiStaNodeClient);
 
-    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-    mobility.Install (wifiStaNodeMaster);
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+    mobility.Install(wifiStaNodeMaster);
 
-    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-    mobility.Install (wifiStaNodeWorker);
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+    mobility.Install(wifiStaNodeWorker);
 
     InternetStackHelper stack;
-    stack.Install (wifiStaNodeClient);
-    stack.Install (wifiStaNodeMaster);
-    stack.Install (wifiStaNodeWorker);
+    stack.Install(wifiStaNodeClient);
+    stack.Install(wifiStaNodeMaster);
+    stack.Install(wifiStaNodeWorker);
 
     Ipv4AddressHelper address;
 
@@ -527,96 +524,95 @@ main (int argc, char *argv[])
     Ipv4InterfaceContainer staNodesMasterInterface;
     Ipv4InterfaceContainer staNodesWorkerInterface;
 
-    address.SetBase ("10.1.3.0", "255.255.255.0");
-    staNodeClientInterface = address.Assign (staDeviceClient);
-    staNodesMasterInterface = address.Assign (staDeviceMaster);
-    staNodesWorkerInterface = address.Assign (staDeviceWorker);
+    address.SetBase("10.1.3.0", "255.255.255.0");
+    staNodeClientInterface = address.Assign(staDeviceClient);
+    staNodesMasterInterface = address.Assign(staDeviceMaster);
+    staNodesWorkerInterface = address.Assign(staDeviceWorker);
 
-    Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+    Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
     uint16_t client_master_port = 1102, worker_client_port = 1102;
     uint16_t worker_ports[WORKER_COUNT]= {1105, 1105, 1105};
 
-    Ptr<client> clientApp = CreateObject<client> (client_master_port, worker_client_port, staNodesMasterInterface, staNodeClientInterface);
-    wifiStaNodeClient.Get (0)->AddApplication (clientApp);
-    clientApp->SetStartTime (Seconds (0.0));
-    clientApp->SetStopTime (Seconds (duration));  
+    Ptr<client> clientApp = CreateObject<client>(client_master_port, worker_client_port, staNodesMasterInterface, staNodeClientInterface);
+    wifiStaNodeClient.Get(0)->AddApplication(clientApp);
+    clientApp->SetStartTime(Seconds(0.0));
+    clientApp->SetStopTime(Seconds(duration));  
     uint16_t client_port = clientApp->getPort();
     Ipv4Address client_ip = clientApp->getIP();
 
-    Ptr<master> masterApp = CreateObject<master> (client_master_port, staNodesMasterInterface, client_ip, client_port);
-    wifiStaNodeMaster.Get (0)->AddApplication (masterApp);
-    masterApp->SetStartTime (Seconds (0.0));
-    masterApp->SetStopTime (Seconds (duration));  
+    Ptr<master> masterApp = CreateObject<master>(client_master_port, staNodesMasterInterface, client_ip, client_port);
+    wifiStaNodeMaster.Get(0)->AddApplication(masterApp);
+    masterApp->SetStartTime(Seconds(0.0));
+    masterApp->SetStopTime(Seconds(duration));  
 
     vector<Ptr<worker>> workerApps;
     for(int i=0; i<WORKER_COUNT; i++)
     {
-        Ptr<worker> workerApp = CreateObject<worker> (worker_ports[i], staNodesWorkerInterface, mappings[i]);
-        wifiStaNodeWorker.Get (i)->AddApplication (workerApp);
-        workerApp->SetStartTime (Seconds (0.0));
-        workerApp->SetStopTime (Seconds (duration));
+        Ptr<worker> workerApp = CreateObject<worker>(worker_ports[i], staNodesWorkerInterface, mappings[i]);
+        wifiStaNodeWorker.Get(i)->AddApplication(workerApp);
+        workerApp->SetStartTime(Seconds(0.0));
+        workerApp->SetStopTime(Seconds(duration));
         InetSocketAddress waddr = workerApp->get_server_address();
         masterApp->add_worker(waddr);
         workerApps.push_back(workerApp);
     }
 
-    NS_LOG_INFO ("Run Simulation");
+    NS_LOG_INFO("Run Simulation");
 
     Ptr<FlowMonitor> flowMonitor;
     FlowMonitorHelper flowHelper;
     flowMonitor = flowHelper.InstallAll();
 
-    ThroughputMonitor (&flowHelper, flowMonitor, error);
-    AverageDelayMonitor (&flowHelper, flowMonitor, error);
+    ThroughputMonitor(&flowHelper, flowMonitor, error);
+    AverageDelayMonitor(&flowHelper, flowMonitor, error);
 
-    Simulator::Stop (Seconds (duration));
-    Simulator::Run ();
+    Simulator::Stop(Seconds(duration));
+    Simulator::Run();
 
     return 0;
 }
 
-client::client (uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster, Ipv4InterfaceContainer& ip)
-        : port (port),
-          s_port (s_port),
+client::client(uint16_t port, uint16_t s_port, Ipv4InterfaceContainer& ipMaster, Ipv4InterfaceContainer& ip)
+        : port(port),
+          s_port(s_port),
           ip_master(ipMaster),
-          ip (ip),
+          ip(ip),
           encodedData("")
 {
-    std::srand (time(0));
+    std::srand(time(0));
 }
 
-client::~client ()
+client::~client()
 {
 }
 
 static void 
-GenerateTraffic (Ptr<Socket> socket, uint16_t data)
+GenerateTraffic(Ptr<Socket> socket, uint16_t data)
 {
     Ptr<Packet> packet = new Packet();
     MyHeader m;
     m.SetData(data);
 
-    packet->AddHeader (m);
-    packet->Print (std::cout);
+    packet->AddHeader(m);
+    packet->Print(std::cout);
 
     socket->Send(packet);
-    cout << "_______________________Trafic sent from client_______________________________" << endl;
 
-    Simulator::Schedule (Seconds (0.1), &GenerateTraffic, socket, rand() % 26);
+    Simulator::Schedule(Seconds(0.1), &GenerateTraffic, socket, rand() % 26);
 }
 
 void
-client::StartApplication (void)
+client::StartApplication(void)
 {
-    Ptr<Socket> sock = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress sockAddr (ip_master.GetAddress(0), port);
-    sock->Connect (sockAddr);
+    Ptr<Socket> sock = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
+    InetSocketAddress sockAddr(ip_master.GetAddress(0), port);
+    sock->Connect(sockAddr);
 
-    server = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress local = InetSocketAddress (ip.GetAddress(0), s_port);
-    server->Bind (local);
-    server->SetRecvCallback (MakeCallback (&client::HandleIncoming, this));
+    server = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
+    InetSocketAddress local = InetSocketAddress(ip.GetAddress(0), s_port);
+    server->Bind(local);
+    server->SetRecvCallback(MakeCallback(&client::HandleIncoming, this));
 
     GenerateTraffic(sock, 0);
 }
@@ -633,71 +629,65 @@ uint16_t client::getPort()
 }
 
 void
-client::HandleIncoming (Ptr<Socket> socket)
+client::HandleIncoming(Ptr<Socket> socket)
 {
     Ptr<Packet> packet;
-    while ((packet = socket->Recv ()))
+    while((packet = socket->Recv()))
     {
-        cout << "_______________________client received decoded_______________________________" << endl;
-        if (packet->GetSize () == 0)
-        {
-            break;
-        }
+        if(packet->GetSize() == 0) break;
+
         EncodedHeader encoded;
-        packet->RemoveHeader (encoded);
+        packet->RemoveHeader(encoded);
         encoded.Print(std::cout);
 
         auto ed = encoded.GetData();
         encodedData += ed;
+        std::cout << "[Temporary Encoded String] " << encodedData << std::endl;
     }
 }
 
-master::master (uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port)
-        : port (port),
-          ip (ip),
+master::master(uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint16_t c_port)
+        : port(port),
+          ip(ip),
           cip(cip),
           c_port(c_port)
 {
-    std::srand (time(0));
+    std::srand(time(0));
 }
 
-master::~master ()
+master::~master()
 {
 }
 
 void 
 master::add_worker(InetSocketAddress waddr)
 {
-    Ptr<Socket> remote = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
-    remote->Connect (waddr);
-    cout << "_______________________master connecting to worker_______________________________" << endl;
+    Ptr<Socket> remote = Socket::CreateSocket(GetNode(), TcpSocketFactory::GetTypeId());
+    remote->Connect(waddr);
     worker_sockets.push_back(remote);
 }
 
 void
-master::StartApplication (void)
+master::StartApplication(void)
 {
-    socket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress local = InetSocketAddress (ip.GetAddress(0), port);
-    socket->Bind (local);
+    socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
+    InetSocketAddress local = InetSocketAddress(ip.GetAddress(0), port);
+    socket->Bind(local);
 
-    socket->SetRecvCallback (MakeCallback (&master::HandleRead, this));
+    socket->SetRecvCallback(MakeCallback(&master::HandleRead, this));
 }
 
 void 
-master::HandleRead (Ptr<Socket> socket)
+master::HandleRead(Ptr<Socket> socket)
 {
     Ptr<Packet> packet;
 
-    while ((packet = socket->Recv ()))
+    while ((packet = socket->Recv()))
     {
-        if (packet->GetSize () == 0)
-        {
-            break;
-        }
-        cout << "_______________________master received from client_______________________________" << endl;
+        if (packet->GetSize() == 0) break;
+
         MyHeader m_header;
-        packet->RemoveHeader (m_header);
+        packet->RemoveHeader(m_header);
         m_header.Print(std::cout);
 
         DecodedHeader d_header;
@@ -709,53 +699,47 @@ master::HandleRead (Ptr<Socket> socket)
         {
             Ptr<Packet> packet = new Packet();
             packet->AddHeader(d_header);
-            w->Send (packet);
-            cout << "_______________________master send to worker_______________________________" << endl;
+            w->Send(packet);
         }
     }
 }
 
-worker::worker (uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
+worker::worker(uint16_t tcpPort, Ipv4InterfaceContainer& ip, map<uint16_t, string> m)
   : tcpPort(tcpPort),
     ip(ip),
     mapping(m)
 {
 }
 
-worker::~worker ()
+worker::~worker()
 {
 }
 
 void 
-worker::StartApplication (void)
+worker::StartApplication(void)
 {
-    // Create TCP socket and set the options
-    tcpSocket = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId ());
-    tcpSocket->Bind (InetSocketAddress (ip.GetAddress (0), tcpPort));
-    cout << "worker ip = "; ip.GetAddress (0).Print(cout);cout << endl;
-    cout << "worker port = " << tcpPort << endl;
-    tcpSocket->Listen ();
-    cout << "_______________________worker start litened_______________________________" << endl;
-    tcpSocket->SetAcceptCallback (MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
-                             MakeCallback (&worker::HandleAccept, this));
+    tcpSocket = Socket::CreateSocket(GetNode(), TcpSocketFactory::GetTypeId());
+    tcpSocket->Bind(InetSocketAddress(ip.GetAddress(0), tcpPort));
+    tcpSocket->Listen();
+
+    tcpSocket->SetAcceptCallback(MakeNullCallback<bool, Ptr<Socket>, const Address &>(),
+                             MakeCallback(&worker::HandleAccept, this));
 }
 
 void
-worker::HandleAccept (Ptr<Socket> sock, const Address &from)
+worker::HandleAccept(Ptr<Socket> sock, const Address &from)
 {
-    cout << "_______________________worker connected to master_______________________________" << endl;
-  sock->SetRecvCallback (MakeCallback (&worker::HandleRead, this));
+    sock->SetRecvCallback(MakeCallback(&worker::HandleRead, this));
 }
 
 void 
-worker::HandleRead (Ptr<Socket> socket)
+worker::HandleRead(Ptr<Socket> socket)
 {
     Ptr<Packet> packet;
 
-    while ((packet = socket->Recv ()))
+    while ((packet = socket->Recv()))
     {
-        cout << "_______________________worker received from master_______________________________" << endl;
-        if (packet->GetSize () == 0) break;
+        if (packet->GetSize() == 0) break;
         
         ProcessData(packet);
     }
@@ -765,13 +749,13 @@ void
 worker::ProcessData(Ptr<Packet> packet) 
 {
     DecodedHeader d_header;
-    packet->RemoveHeader (d_header);
+    packet->RemoveHeader(d_header);
     d_header.Print(std::cout);
 
     uint16_t key = d_header.GetData(),
              c_port = d_header.GetPort();
     Ipv4Address c_ipv4 = d_header.GetIpv4();
-    string encoded = get_from_map (mapping, key);
+    string encoded = get_from_map(mapping, key);
     if (encoded == "") return;
 
     Ptr<Packet> e_packet = new Packet();
@@ -779,11 +763,10 @@ worker::ProcessData(Ptr<Packet> packet)
     e_header.SetData(encoded);
     e_packet->AddHeader(e_header);
 
-    Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode (), UdpSocketFactory::GetTypeId ());
-    InetSocketAddress remote_client (c_ipv4, c_port);
-    udpSendSocket->Connect (remote_client);
-    udpSendSocket->Send (e_packet);
-    cout << "_______________________Worker send to client_______________________________" << endl;
+    Ptr<Socket> udpSendSocket = Socket::CreateSocket (GetNode(), UdpSocketFactory::GetTypeId());
+    InetSocketAddress remote_client(c_ipv4, c_port);
+    udpSendSocket->Connect(remote_client);
+    udpSendSocket->Send(e_packet);
     udpSendSocket->Close();
 }
 
@@ -791,7 +774,5 @@ worker::ProcessData(Ptr<Packet> packet)
 InetSocketAddress 
 worker::get_server_address()
 {
-    cout << "get_server_address:::worker ip = "; ip.GetAddress (0).Print(cout);cout << endl;
-    cout << "get_server_address:::worker port = " << tcpPort << endl;
-    return InetSocketAddress (ip.GetAddress (0), tcpPort);
+    return InetSocketAddress(ip.GetAddress(0), tcpPort);
 }
