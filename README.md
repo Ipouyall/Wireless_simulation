@@ -38,18 +38,22 @@ Now we explain metrics for monitoring our network:
 `Average of e2e Delay`: displays (sum of all packets e2e Delay)/packets.
 
 client to master:
+
 ![diagram](screenshots/client-to-master1.png)
 ![diagram](screenshots/client-to-master2.png)
 
 master to worker:
+
 ![diagram](screenshots/master-to-worker1.png)
 ![diagram](screenshots/master-to-worker2.png)
 
 worker to master:
+
 ![diagram](screenshots/master-to-worker2.png)
 ![diagram](screenshots/master-to-worker2.png)
 
 And the output message shown bellow:
+
 ![diagram](screenshots/out.png)
 
 # What we did
