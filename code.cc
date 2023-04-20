@@ -5,6 +5,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #include "ns3/core-module.h"
 #include "ns3/point-to-point-module.h"
@@ -382,6 +383,8 @@ private:
     uint16_t c_port;
     vector<Ptr<Socket>> worker_sockets;
     Ptr<Socket> socket;
+    vector<uint16_t> Received_data;
+    vector<InetSocketAddress> connected_inet;
 };
 
 class client : public Application
@@ -655,14 +658,23 @@ master::master(uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint1
 
 master::~master()
 {
+    std::cout << "[Master]:::[Decoded msg]:::[";
+    for(int i=0; i<Received_data.size()-1; i++)
+        std::cout << Received_data[i] << ":";
+    std::cout << Received_data[Received_data.size()-1] << "]" << std::endl;
 }
 
 void 
 master::add_worker(InetSocketAddress waddr)
 {
+    if (std::find(connected_inet.begin(), connected_inet.end(),waddr)!=connected_inet.end()){
+        std::cout<< 'Worker exists' << std::endl;
+        return;
+    }
     Ptr<Socket> remote = Socket::CreateSocket(GetNode(), TcpSocketFactory::GetTypeId());
     remote->Connect(waddr);
     worker_sockets.push_back(remote);
+    connected_inet.push_back(waddr);
 }
 
 void
@@ -692,6 +704,7 @@ master::HandleRead(Ptr<Socket> socket)
         d_header.SetData(m_header.GetData());
         d_header.SetPort(c_port);
         d_header.SetIpv4(cip);
+        Received_data.push_back(m_header.GetData());
 
         for (auto& w : worker_sockets)
         {
