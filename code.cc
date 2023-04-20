@@ -31,6 +31,11 @@
 #include "ns3/flow-monitor-module.h"
 
 #define WORKER_COUNT 3
+#define LOG_MONITOR 1
+#define LOG_MONITOR_HEADER 2
+#define LOG_ALL 3
+
+const int log_lvl = LOG_MONITOR_HEADER;
 
 using namespace ns3;
 using namespace std;
@@ -596,7 +601,8 @@ GenerateTraffic(Ptr<Socket> socket, uint16_t data)
     m.SetData(data);
 
     packet->AddHeader(m);
-    packet->Print(std::cout);
+    if (log_lvl >= LOG_MONITOR_HEADER) 
+        packet->Print(std::cout);
 
     socket->Send(packet);
 
@@ -639,11 +645,13 @@ client::HandleIncoming(Ptr<Socket> socket)
 
         EncodedHeader encoded;
         packet->RemoveHeader(encoded);
-        encoded.Print(std::cout);
+        if (log_lvl >= LOG_MONITOR_HEADER) 
+            encoded.Print(std::cout);
 
         auto ed = encoded.GetData();
         encodedData += ed;
-        std::cout << "[Temporary Encoded String] " << encodedData << std::endl;
+        if (log_lvl >= LOG_ALL) 
+            std::cout << "[Temporary Encoded String] " << encodedData << std::endl;
     }
 }
 
@@ -659,7 +667,7 @@ master::master(uint16_t port, Ipv4InterfaceContainer& ip, Ipv4Address cip, uint1
 master::~master()
 {
     std::cout << "[Master]:::[Decoded msg]:::[";
-    for(int i=0; i<Received_data.size()-1; i++)
+    for(int i=0; i<(int)Received_data.size()-1; i++)
         std::cout << Received_data[i] << ":";
     std::cout << Received_data[Received_data.size()-1] << "]" << std::endl;
 }
@@ -668,7 +676,8 @@ void
 master::add_worker(InetSocketAddress waddr)
 {
     if (std::find(connected_inet.begin(), connected_inet.end(),waddr)!=connected_inet.end()){
-        std::cout<< 'Worker exists' << std::endl;
+        if (log_lvl >= LOG_ALL)
+            std::cout<< "Worker exists" << std::endl;
         return;
     }
     Ptr<Socket> remote = Socket::CreateSocket(GetNode(), TcpSocketFactory::GetTypeId());
@@ -698,7 +707,8 @@ master::HandleRead(Ptr<Socket> socket)
 
         MyHeader m_header;
         packet->RemoveHeader(m_header);
-        m_header.Print(std::cout);
+        if (log_lvl >= LOG_MONITOR_HEADER) 
+            m_header.Print(std::cout);
 
         DecodedHeader d_header;
         d_header.SetData(m_header.GetData());
@@ -761,7 +771,8 @@ worker::ProcessData(Ptr<Packet> packet)
 {
     DecodedHeader d_header;
     packet->RemoveHeader(d_header);
-    d_header.Print(std::cout);
+    if (log_lvl >= LOG_MONITOR_HEADER) 
+        d_header.Print(std::cout);
 
     uint16_t key = d_header.GetData(),
              c_port = d_header.GetPort();
