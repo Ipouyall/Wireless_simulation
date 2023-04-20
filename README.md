@@ -6,9 +6,55 @@ Works fine with [ns-3.35](https://www.nsnam.org/releases/ns-3-35/)!
 
 
 # Report
+As we know UDP protocol is connection less so some packets lost when master node want to receive from client or client want to received packets from worker nodes.
+
+ Now we analyse logs of our simulator:
+
+`10.1.3.1 -> clinet node`
+
+`10.1.3.2 -> master node`
+
+`10.1.3.3 -> worker nodes`
+
+![diagram](screenshots/header-log.png)
+
+As we can see first of all client send a packet with `MyHeader` header and then master send a packet with `DecodedHeader` header to workers and then the worker send a packet with `DecodedHeader` header to client.
+
+Now we explain metrics for monitoring our network:
+
+`Tx Packets`: displays the number of transmitted packets.
+
+`Rx Packets`: displays the number of received packets.
+
+`Duration`: displays time taken by transmission.
+
+`Last Received Packet`: displays the time that last packet received.
+
+`Throughput`: displays how much data actually transfers during a simulation time.
+
+`e2e Delay`: displays the time taken for a packet to be transmited across a network from source to destination.
+
+`Sum of e2e Delay`: displays sum of all packets e2e Delay.
+
+`Average of e2e Delay`: displays (sum of all packets e2e Delay)/packets.
 
 
 
+client to master:
+![diagram](screenshots/client-to-master1.png)
+![diagram](screenshots/client-to-master2.png)
+
+master to worker:
+![diagram](screenshots/master-to-worker1.png)
+![diagram](screenshots/master-to-worker2.png)
+
+worker to master:
+![diagram](screenshots/master-to-worker2.png)
+![diagram](screenshots/master-to-worker2.png)
+
+
+And the output message shown bellow:
+![diagram](screenshots/out.png)
 
 
 # What we did
