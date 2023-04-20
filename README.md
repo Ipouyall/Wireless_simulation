@@ -49,12 +49,22 @@ master to worker:
 
 worker to master:
 
-![diagram](screenshots/master-to-worker2.png)
+![diagram](screenshots/master-to-worker1.png)
 ![diagram](screenshots/master-to-worker2.png)
 
 And the output message shown bellow:
 
 ![diagram](screenshots/out.png)
+
+
+And also if we increase packet rate sending, the throughput and latency will increase because the number of packet will increase during time.
+
+![diagram](screenshots/rate-increase.png)
+
+And if we decrease our throughput will decrease.
+
+![diagram](screenshots/rate-decrease.png)
+
 
 # What we did
 
