@@ -23,3 +23,6 @@ We then implemented the worker (mapper) class so that it can receive data from t
 For Master->Workers communication, we used the TCP protocol, and for each worker, we have an independent TCP server, and we pass the Inet-address to the server to connect to them.
 
 After receiving each packet (decoded data) from the client, the master creates a DecodedHeader to send the data+client address to workers. This is done sequentially. By using the same port for all workers, the master doesn't need to loop over clients and generate a packet each time.
+
+Top Level description of communications:
+![diagram](screenshots/top-lvl.png)
